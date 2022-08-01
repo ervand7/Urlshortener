@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/ervand7/urlshortener/internal/app/storage"
 	"github.com/ervand7/urlshortener/internal/app/views"
 	"github.com/gorilla/mux"
 	"log"
@@ -8,10 +9,12 @@ import (
 )
 
 func Run() {
-	rtr := mux.NewRouter()
-	rtr.HandleFunc("/", views.UrlShorten).Methods("POST")
-	rtr.HandleFunc("/{id:[0-9a-zA-Z]+}", views.UrlGet).Methods("GET")
+	st := make(storage.Storage, 0)
 
-	http.Handle("/", rtr)
+	router := mux.NewRouter()
+	router.HandleFunc("/", views.UrlShorten(st)).Methods("POST")
+	router.HandleFunc("/{id:[a-zA-Z]+}", views.UrlGet(st)).Methods("GET")
+
+	http.Handle("/", router)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

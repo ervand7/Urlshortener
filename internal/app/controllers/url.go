@@ -10,14 +10,14 @@ func init() {
 }
 
 const (
-	BaseUrl           = "http://localhost:8080"
-	ShortenUrlLen int = 5
+	BaseUrl                = "http://localhost:8080"
+	ShortenEndpointLen int = 5
 )
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 func ShortenUrl() string {
-	result := make([]rune, ShortenUrlLen)
+	result := make([]rune, ShortenEndpointLen)
 	for i := range result {
 		randIndex := rand.Intn(len(letterRunes))
 		result[i] = letterRunes[randIndex]
