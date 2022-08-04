@@ -2,13 +2,13 @@ package views
 
 import (
 	"github.com/ervand7/urlshortener/internal/app/controllers"
-	"github.com/ervand7/urlshortener/internal/app/storage"
+	"github.com/ervand7/urlshortener/internal/app/models"
 	"io"
 	"net/http"
 )
 
 // UrlShorten POST ("/")
-func UrlShorten(_storage storage.UrlRepository) func(writer http.ResponseWriter, request *http.Request) {
+func UrlShorten(storage models.UrlRepository) func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		defer request.Body.Close()
 		body, err := io.ReadAll(request.Body)
@@ -25,18 +25,18 @@ func UrlShorten(_storage storage.UrlRepository) func(writer http.ResponseWriter,
 		writer.WriteHeader(http.StatusCreated)
 
 		shortenedUrl := controllers.ShortenUrl()
-		_storage.Set(shortenedUrl, url)
+		storage.Set(shortenedUrl, url)
 		writer.Write([]byte(shortenedUrl))
 		return
 	}
 }
 
 // UrlGet GET /{id}
-func UrlGet(_storage storage.UrlRepository) func(writer http.ResponseWriter, request *http.Request) {
+func UrlGet(storage models.UrlRepository) func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		endpoint := request.URL.Path
 		shortenedUrl := controllers.BaseUrl + endpoint
-		originUrl := _storage.Get(shortenedUrl)
+		originUrl := storage.Get(shortenedUrl)
 		if originUrl == "" {
 			http.Error(writer, "not exists", http.StatusBadRequest)
 			return

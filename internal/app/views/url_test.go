@@ -3,7 +3,7 @@ package views
 import (
 	"bytes"
 	"github.com/ervand7/urlshortener/internal/app/controllers"
-	"github.com/ervand7/urlshortener/internal/app/storage"
+	"github.com/ervand7/urlshortener/internal/app/models"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,9 +68,9 @@ func TestUrlShorten(t *testing.T) {
 				bytes.NewBuffer(body),
 			)
 
-			_storage := make(storage.Storage, 0)
+			storage := make(models.Storage, 0)
 			router := mux.NewRouter()
-			router.HandleFunc("/", UrlShorten(_storage)).Methods("POST")
+			router.HandleFunc("/", UrlShorten(storage)).Methods("POST")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
@@ -135,12 +135,12 @@ func TestUrlGet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			_storage := make(storage.Storage, 0)
-			_storage.Set(tt.shortenedUrl, tt.want.originUrl)
+			storage := make(models.Storage, 0)
+			storage.Set(tt.shortenedUrl, tt.want.originUrl)
 
 			request := httptest.NewRequest(tt.method, tt.endpoint, nil)
 			router := mux.NewRouter()
-			router.HandleFunc("/{id:[a-zA-Z]+}", UrlGet(_storage)).Methods("GET")
+			router.HandleFunc("/{id:[a-zA-Z]+}", UrlGet(storage)).Methods("GET")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 

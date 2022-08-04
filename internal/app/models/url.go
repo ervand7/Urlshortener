@@ -1,4 +1,4 @@
-package storage
+package models
 
 type UrlRepository interface {
 	Get(short string) (origin string)
