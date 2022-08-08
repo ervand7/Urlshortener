@@ -2,47 +2,70 @@ package views
 
 import (
 	"github.com/ervand7/urlshortener/internal/app/controllers"
-	"github.com/ervand7/urlshortener/internal/app/models"
 	"io"
 	"net/http"
+	"sync"
 )
 
+type URLStorage struct {
+	HashTable map[string]string
+	mutex     sync.Mutex
+}
+
+func (s *URLStorage) Get(short string) (origin string) {
+	origin, exist := s.HashTable[short]
+	if !exist {
+		return ""
+	}
+	return origin
+}
+
+func (s *URLStorage) Set(short, origin string) {
+	s.HashTable[short] = origin
+}
+
 // URLShorten POST ("/")
-func URLShorten(storage models.URLRepository) func(writer http.ResponseWriter, request *http.Request) {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		defer request.Body.Close()
-		body, err := io.ReadAll(request.Body)
+func (s *URLStorage) URLShorten() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.mutex.Lock()
+		defer r.Body.Close()
+		defer s.mutex.Unlock()
+
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			http.Error(writer, "invalid body", http.StatusBadRequest)
+			http.Error(w, "invalid body", http.StatusBadRequest)
 			return
 		}
 		url := string(body)
 		if url == "" {
-			http.Error(writer, "param url not filled", http.StatusBadRequest)
+			http.Error(w, "param url not filled", http.StatusBadRequest)
 			return
 		}
-		writer.Header().Add("Content-type", "text/plain; charset=utf-8")
-		writer.WriteHeader(http.StatusCreated)
+		w.Header().Add("Content-type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusCreated)
 
 		shortenedURL := controllers.ShortenURL()
-		storage.Set(shortenedURL, url)
-		writer.Write([]byte(shortenedURL))
+		s.Set(shortenedURL, url)
+		w.Write([]byte(shortenedURL))
 	}
 }
 
 // URLGet GET /{id}
-func URLGet(storage models.URLRepository) func(writer http.ResponseWriter, request *http.Request) {
-	return func(writer http.ResponseWriter, request *http.Request) {
-		endpoint := request.URL.Path
+func (s *URLStorage) URLGet() func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		s.mutex.Lock()
+		defer s.mutex.Unlock()
+
+		endpoint := r.URL.Path
 		shortenedURL := controllers.BaseURL + endpoint
-		originURL := storage.Get(shortenedURL)
+		originURL := s.Get(shortenedURL)
 		if originURL == "" {
-			http.Error(writer, "not exists", http.StatusBadRequest)
+			http.Error(w, "not exists", http.StatusBadRequest)
 			return
 		}
 		http.Redirect(
-			writer,
-			request,
+			w,
+			r,
 			originURL,
 			http.StatusTemporaryRedirect,
 		)
