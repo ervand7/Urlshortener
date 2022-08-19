@@ -21,6 +21,7 @@ func newRouter() chi.Router {
 	}
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.URLShorten())
+		r.Post("/api/shorten", server.URLShortenJSON())
 		r.Get("/{id:[a-zA-Z]+}", server.URLGet())
 	})
 
