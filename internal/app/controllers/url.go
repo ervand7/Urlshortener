@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"github.com/ervand7/urlshortener/internal/app/config"
 	"math/rand"
 	"time"
 )
@@ -10,7 +11,6 @@ func init() {
 }
 
 const (
-	BaseURL                = "http://localhost:8080"
 	ShortenEndpointLen int = 5
 )
 
@@ -22,5 +22,5 @@ func ShortenURL() string {
 		randIndex := rand.Intn(len(letterRunes))
 		result[i] = letterRunes[randIndex]
 	}
-	return BaseURL + "/" + string(result)
+	return config.GetConfig().BaseURL + "/" + string(result)
 }

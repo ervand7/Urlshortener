@@ -3,6 +3,7 @@ package views
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers"
 	"github.com/ervand7/urlshortener/internal/app/models"
 	"github.com/gorilla/mux"
@@ -15,7 +16,9 @@ import (
 )
 
 func TestUrlShorten(t *testing.T) {
-	lenRespBody := len(controllers.BaseURL) + len("/") + controllers.ShortenEndpointLen
+	lenRespBody := len(config.GetConfig().BaseURL) +
+		len("/") +
+		controllers.ShortenEndpointLen
 
 	type want struct {
 		contentType string
@@ -162,7 +165,9 @@ func TestUrlGet(t *testing.T) {
 }
 
 func TestUrlShortenJSON(t *testing.T) {
-	lenResultURL := len(controllers.BaseURL) + len("/") + controllers.ShortenEndpointLen
+	lenResultURL := len(config.GetConfig().BaseURL) +
+		len("/") +
+		controllers.ShortenEndpointLen
 	const Endpoint string = "/api/shorten"
 
 	type want struct {

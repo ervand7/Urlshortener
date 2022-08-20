@@ -2,6 +2,7 @@ package views
 
 import (
 	"encoding/json"
+	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers"
 	"io"
 	"net/http"
@@ -35,7 +36,7 @@ func (server *Server) URLShorten() func(w http.ResponseWriter, r *http.Request) 
 func (server *Server) URLGet() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		endpoint := r.URL.Path
-		shortenedURL := controllers.BaseURL + endpoint
+		shortenedURL := config.GetConfig().BaseURL + endpoint
 		originURL := server.Storage.Get(shortenedURL)
 		if originURL == "" {
 			http.Error(w, "not exists", http.StatusBadRequest)

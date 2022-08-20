@@ -1,11 +1,17 @@
 package server
 
 import (
+	"github.com/ervand7/urlshortener/internal/app/config"
 	"log"
 	"net/http"
 )
 
 func Run() {
 	router := newRouter()
-	log.Fatal(http.ListenAndServe(":8080", router))
+	log.Fatal(
+		http.ListenAndServe(
+			config.GetConfig().ServerAddress,
+			router,
+		),
+	)
 }
