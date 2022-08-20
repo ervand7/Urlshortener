@@ -4,7 +4,7 @@ Content-Type: text/plain; charset=utf-8
 "https://practicum.yandex.ru/learn/go-advanced/courses/14d6ff29-c8b6-43bf-9c55-12e8fe25b1b0/sprints/39172/topics/add19e4a-79bf-416e-9d13-0df2005ec81e/lessons/74ebe51b-de58-4142-83b7-3d21ba695a9f/"
 
 ###
-GET http://localhost:8080/HyAMQ
+GET http://localhost:8080/IzdLU
 
 ###
 POST http://localhost:8080/api/shorten

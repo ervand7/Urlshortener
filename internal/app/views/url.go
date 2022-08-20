@@ -3,7 +3,7 @@ package views
 import (
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
-	"github.com/ervand7/urlshortener/internal/app/controllers"
+	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	"io"
 	"net/http"
 )
@@ -26,7 +26,7 @@ func (server *Server) URLShorten() func(w http.ResponseWriter, r *http.Request) 
 		w.Header().Add("Content-type", "text/plain; charset=utf-8")
 		w.WriteHeader(http.StatusCreated)
 
-		shortenedURL := controllers.ShortenURL()
+		shortenedURL := generatedata.ShortenURL()
 		server.Storage.Set(shortenedURL, url)
 		w.Write([]byte(shortenedURL))
 	}
@@ -79,7 +79,7 @@ func (server *Server) URLShortenJSON() func(w http.ResponseWriter, r *http.Reque
 			http.Error(w, "internal server error", http.StatusInternalServerError)
 			return
 		}
-		shortenedURL := controllers.ShortenURL()
+		shortenedURL := generatedata.ShortenURL()
 		respBody := RespBody{
 			Result: shortenedURL,
 		}

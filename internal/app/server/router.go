@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/ervand7/urlshortener/internal/app/controllers/filestorage"
 	"github.com/ervand7/urlshortener/internal/app/models"
 	"github.com/ervand7/urlshortener/internal/app/views"
 	"github.com/go-chi/chi/v5"
@@ -17,6 +18,7 @@ func newRouter() chi.Router {
 	server := views.Server{
 		Storage: &models.URLStorage{
 			HashTable: make(map[string]string, 0),
+			FileTable: filestorage.FileTable{},
 		},
 	}
 	r.Route("/", func(r chi.Router) {
