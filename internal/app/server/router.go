@@ -1,8 +1,7 @@
 package server
 
 import (
-	"github.com/ervand7/urlshortener/internal/app/controllers/filestorage"
-	"github.com/ervand7/urlshortener/internal/app/models"
+	"github.com/ervand7/urlshortener/internal/app/models/url"
 	"github.com/ervand7/urlshortener/internal/app/views"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -16,10 +15,10 @@ func newRouter() chi.Router {
 	r.Use(middleware.Recoverer)
 
 	server := views.Server{
-		Storage: &models.URLStorage{
+		MemoryStorage: &url.MemoryStorage{
 			HashTable: make(map[string]string, 0),
-			FileTable: filestorage.FileTable{},
 		},
+		FileStorage: &url.FileStorage{},
 	}
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.URLShorten())

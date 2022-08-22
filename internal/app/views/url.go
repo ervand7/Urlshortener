@@ -15,7 +15,7 @@ func (server *Server) URLShorten() func(w http.ResponseWriter, r *http.Request) 
 
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, "invalid body", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		url := string(body)
@@ -27,7 +27,15 @@ func (server *Server) URLShorten() func(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusCreated)
 
 		shortenedURL := generatedata.ShortenURL()
-		server.Storage.Set(shortenedURL, url)
+		switch config.GetConfig().FileStoragePath {
+		case "":
+			server.MemoryStorage.Set(shortenedURL, url)
+		default:
+			if err := server.FileStorage.Set(shortenedURL, url); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
 		w.Write([]byte(shortenedURL))
 	}
 }
@@ -37,17 +45,25 @@ func (server *Server) URLGet() func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		endpoint := r.URL.Path
 		shortenedURL := config.GetConfig().BaseURL + endpoint
-		originURL := server.Storage.Get(shortenedURL)
+		var originURL string
+
+		switch config.GetConfig().FileStoragePath {
+		case "":
+			originURL = server.MemoryStorage.Get(shortenedURL)
+		default:
+			result, err := server.FileStorage.Get(shortenedURL)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			originURL = result
+		}
+
 		if originURL == "" {
 			http.Error(w, "not exists", http.StatusBadRequest)
 			return
 		}
-		http.Redirect(
-			w,
-			r,
-			originURL,
-			http.StatusTemporaryRedirect,
-		)
+		http.Redirect(w, r, originURL, http.StatusTemporaryRedirect)
 	}
 }
 
@@ -64,34 +80,43 @@ func (server *Server) URLShortenJSON() func(w http.ResponseWriter, r *http.Reque
 			}
 		)
 
-		bodyBytes, err := io.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
-			http.Error(w, "invalid body", http.StatusBadRequest)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		if len(bodyBytes) == 0 {
+		if len(body) == 0 {
 			http.Error(w, "param url not filled", http.StatusBadRequest)
 			return
 		}
 
 		reqBody := ReqBody{}
-		if err := json.Unmarshal(bodyBytes, &reqBody); err != nil {
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+		if err := json.Unmarshal(body, &reqBody); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+
 		shortenedURL := generatedata.ShortenURL()
 		respBody := RespBody{
 			Result: shortenedURL,
 		}
 		marshaledBody, err := json.Marshal(respBody)
 		if err != nil {
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-
-		server.Storage.Set(shortenedURL, reqBody.URL)
 		w.Header().Add("Content-type", "application/json")
 		w.WriteHeader(http.StatusCreated)
+
+		switch config.GetConfig().FileStoragePath {
+		case "":
+			server.MemoryStorage.Set(shortenedURL, reqBody.URL)
+		default:
+			if err := server.FileStorage.Set(shortenedURL, reqBody.URL); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+		}
 		w.Write(marshaledBody)
 	}
 }

@@ -1,10 +1,9 @@
-package filestorage
+package filetable
 
 import (
 	"bufio"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
-	"log"
 	"os"
 )
 
@@ -21,7 +20,7 @@ func (c *consumer) ReadEvent() (map[string]string, error) {
 	for c.scanner.Scan() {
 		row := c.scanner.Bytes()
 		if err := json.Unmarshal(row, &urlMap); err != nil {
-			log.Fatal(err)
+			return nil, err
 		}
 	}
 	return urlMap, nil
@@ -41,21 +40,4 @@ func NewConsumer() (*consumer, error) {
 		file:    file,
 		scanner: bufio.NewScanner(file),
 	}, nil
-}
-
-func (f FileTable) Get(key string) (originURL string) {
-	consumer, err := NewConsumer()
-	if err != nil {
-		panic(err)
-	}
-	defer consumer.Close()
-	urlMap, readEventErr := consumer.ReadEvent()
-	if readEventErr != nil {
-		panic(readEventErr)
-	}
-	originURL, exists := urlMap[key]
-	if !exists {
-		return ""
-	}
-	return originURL
 }

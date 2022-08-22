@@ -1,7 +1,8 @@
 package views
 
-import "github.com/ervand7/urlshortener/internal/app/models"
+import "github.com/ervand7/urlshortener/internal/app/models/url"
 
 type Server struct {
-	Storage *models.URLStorage
+	MemoryStorage *url.MemoryStorage
+	FileStorage   *url.FileStorage
 }

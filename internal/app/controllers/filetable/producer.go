@@ -1,4 +1,4 @@
-package filestorage
+package filetable
 
 import (
 	"bufio"
@@ -40,18 +40,4 @@ func NewProducer() (*producer, error) {
 		file:   file,
 		writer: bufio.NewWriter(file),
 	}, nil
-}
-
-func (f FileTable) Set(key, value string) {
-	producer, err := NewProducer()
-	if err != nil {
-		panic(err)
-	}
-	defer producer.Close()
-	urlMap := make(map[string]string, 0)
-	urlMap[key] = value
-	writeEventErr := producer.WriteEvent(urlMap)
-	if writeEventErr != nil {
-		panic(writeEventErr)
-	}
 }

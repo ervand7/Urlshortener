@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
-	"github.com/ervand7/urlshortener/internal/app/models"
+	"github.com/ervand7/urlshortener/internal/app/models/url"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -73,7 +73,7 @@ func TestUrlShorten(t *testing.T) {
 			)
 
 			server := Server{
-				Storage: &models.URLStorage{
+				MemoryStorage: &url.MemoryStorage{
 					HashTable: make(map[string]string, 0),
 				},
 			}
@@ -144,11 +144,11 @@ func TestUrlGet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			server := Server{
-				Storage: &models.URLStorage{
+				MemoryStorage: &url.MemoryStorage{
 					HashTable: make(map[string]string, 0),
 				},
 			}
-			server.Storage.Set(tt.shortenedURL, tt.want.originURL)
+			server.MemoryStorage.Set(tt.shortenedURL, tt.want.originURL)
 
 			request := httptest.NewRequest(tt.method, tt.endpoint, nil)
 			router := mux.NewRouter()
@@ -239,7 +239,7 @@ func TestUrlShortenJSON(t *testing.T) {
 			)
 
 			server := Server{
-				Storage: &models.URLStorage{
+				MemoryStorage: &url.MemoryStorage{
 					HashTable: make(map[string]string, 0),
 				},
 			}
