@@ -1,9 +1,22 @@
 package config
 
 import (
+	"flag"
 	"github.com/caarlos0/env/v6"
 	"log"
 )
+
+var (
+	servAddrFlag        *string
+	baseURLFlag         *string
+	fileStoragePathFlag *string
+)
+
+func init() {
+	servAddrFlag = flag.String("a", "", "Server address")
+	baseURLFlag = flag.String("b", "", "Base shorten url")
+	fileStoragePathFlag = flag.String("f", "", "File storage path")
+}
 
 type Config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
@@ -17,5 +30,17 @@ func GetConfig() Config {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	flag.Parse()
+	if *servAddrFlag != "" {
+		cfg.ServerAddress = *servAddrFlag
+	}
+	if *baseURLFlag != "" {
+		cfg.BaseURL = *baseURLFlag
+	}
+	if *fileStoragePathFlag != "" {
+		cfg.FileStoragePath = *fileStoragePathFlag
+	}
+
 	return cfg
 }
