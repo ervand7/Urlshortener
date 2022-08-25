@@ -3,6 +3,7 @@ package views
 import (
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
+	"github.com/ervand7/urlshortener/internal/app/controllers/compress"
 	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	"io"
 	"net/http"
@@ -18,16 +19,25 @@ func (server *Server) URLShorten() func(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "invalid body", http.StatusBadRequest)
 			return
 		}
+		if r.Header.Get("Content-Encoding") == "gzip" {
+			body, _ = compress.Decompress(body)
+		}
+
 		url := string(body)
 		if url == "" {
 			http.Error(w, "param url not filled", http.StatusBadRequest)
 			return
 		}
-		w.Header().Add("Content-type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusCreated)
-
 		shortenedURL := generatedata.ShortenURL()
 		server.Storage.Set(shortenedURL, url)
+
+		w.Header().Add("Content-type", "text/plain; charset=utf-8")
+		if r.Header.Get("Accept-Encoding") == "gzip" {
+			compressed, _ := compress.Compress([]byte(shortenedURL))
+			w.WriteHeader(http.StatusCreated)
+			w.Write(compressed)
+		}
+		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(shortenedURL))
 	}
 }
@@ -65,6 +75,9 @@ func (server *Server) URLShortenJSON() func(w http.ResponseWriter, r *http.Reque
 		)
 
 		bodyBytes, err := io.ReadAll(r.Body)
+		if r.Header.Get("Content-Encoding") == "gzip" {
+			bodyBytes, _ = compress.Decompress(bodyBytes)
+		}
 		if err != nil {
 			http.Error(w, "invalid body", http.StatusBadRequest)
 			return
@@ -91,6 +104,11 @@ func (server *Server) URLShortenJSON() func(w http.ResponseWriter, r *http.Reque
 
 		server.Storage.Set(shortenedURL, reqBody.URL)
 		w.Header().Add("Content-type", "application/json")
+		if r.Header.Get("Accept-Encoding") == "gzip" {
+			compressed, _ := compress.Compress(marshaledBody)
+			w.WriteHeader(http.StatusCreated)
+			w.Write(compressed)
+		}
 		w.WriteHeader(http.StatusCreated)
 		w.Write(marshaledBody)
 	}

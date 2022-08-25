@@ -14,6 +14,7 @@ func newRouter() chi.Router {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(gzipHandle)
 
 	server := views.Server{
 		Storage: &models.URLStorage{
