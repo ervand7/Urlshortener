@@ -32,11 +32,11 @@ func (server *Server) URLShorten() func(w http.ResponseWriter, r *http.Request) 
 		server.Storage.Set(shortenedURL, url)
 
 		w.Header().Add("Content-type", "text/plain; charset=utf-8")
-		if r.Header.Get("Accept-Encoding") == "gzip" {
-			compressed, _ := compress.Compress([]byte(shortenedURL))
-			w.WriteHeader(http.StatusCreated)
-			w.Write(compressed)
-		}
+		//if r.Header.Get("Accept-Encoding") == "gzip" {
+		//	compressed, _ := compress.Compress([]byte(shortenedURL))
+		//	w.WriteHeader(http.StatusCreated)
+		//	w.Write(compressed)
+		//}
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(shortenedURL))
 	}
@@ -104,11 +104,11 @@ func (server *Server) URLShortenJSON() func(w http.ResponseWriter, r *http.Reque
 
 		server.Storage.Set(shortenedURL, reqBody.URL)
 		w.Header().Add("Content-type", "application/json")
-		if r.Header.Get("Accept-Encoding") == "gzip" {
-			compressed, _ := compress.Compress(marshaledBody)
-			w.WriteHeader(http.StatusCreated)
-			w.Write(compressed)
-		}
+		//if r.Header.Get("Accept-Encoding") == "gzip" {
+		//	compressed, _ := compress.Compress(marshaledBody)
+		//	w.WriteHeader(http.StatusCreated)
+		//	w.Write(compressed)
+		//}
 		w.WriteHeader(http.StatusCreated)
 		w.Write(marshaledBody)
 	}
