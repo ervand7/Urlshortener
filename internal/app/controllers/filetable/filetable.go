@@ -1,13 +1,19 @@
 package filetable
 
+import "github.com/ervand7/urlshortener/internal/app/utils"
+
 type FileTable struct{}
 
 func (f FileTable) Get(key string) (originURL string, err error) {
-	consumer, err := NewConsumer()
+	consumer, err := newConsumer()
 	if err != nil {
 		return "", err
 	}
-	defer consumer.Close()
+	defer func() {
+		if err := consumer.Close(); err != nil {
+			utils.Logger.Warn(err.Error())
+		}
+	}()
 
 	urlMap, readEventErr := consumer.ReadEvent()
 	if readEventErr != nil {
@@ -21,11 +27,15 @@ func (f FileTable) Get(key string) (originURL string, err error) {
 }
 
 func (f FileTable) Set(key, value string) error {
-	producer, err := NewProducer()
+	producer, err := newProducer()
 	if err != nil {
 		return err
 	}
-	defer producer.Close()
+	defer func() {
+		if err := producer.Close(); err != nil {
+			utils.Logger.Warn(err.Error())
+		}
+	}()
 
 	urlMap := make(map[string]string, 0)
 	urlMap[key] = value

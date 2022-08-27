@@ -13,6 +13,7 @@ func newRouter() chi.Router {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+	r.Use(GzipMiddleware)
 
 	server := views.Server{
 		MemoryStorage: &url.MemoryStorage{
@@ -21,9 +22,9 @@ func newRouter() chi.Router {
 		FileStorage: &url.FileStorage{},
 	}
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", server.URLShorten())
-		r.Post("/api/shorten", server.URLShortenJSON())
-		r.Get("/{id:[a-zA-Z]+}", server.URLGet())
+		r.Post("/", server.URLShorten)
+		r.Post("/api/shorten", server.URLShortenJSON)
+		r.Get("/{id:[a-zA-Z]+}", server.URLGet)
 	})
 
 	return r

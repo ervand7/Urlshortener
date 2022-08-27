@@ -30,7 +30,7 @@ func (c *consumer) Close() error {
 	return c.file.Close()
 }
 
-func NewConsumer() (*consumer, error) {
+func newConsumer() (*consumer, error) {
 	filename := config.GetConfig().FileStoragePath
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {

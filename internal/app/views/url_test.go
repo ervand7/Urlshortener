@@ -6,6 +6,7 @@ import (
 	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	"github.com/ervand7/urlshortener/internal/app/models/url"
+	"github.com/ervand7/urlshortener/internal/app/utils"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -78,7 +79,7 @@ func TestUrlShorten(t *testing.T) {
 				},
 			}
 			router := mux.NewRouter()
-			router.HandleFunc("/", server.URLShorten()).Methods("POST")
+			router.HandleFunc("/", server.URLShorten).Methods("POST")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
@@ -152,12 +153,14 @@ func TestUrlGet(t *testing.T) {
 
 			request := httptest.NewRequest(tt.method, tt.endpoint, nil)
 			router := mux.NewRouter()
-			router.HandleFunc("/{id:[a-zA-Z]+}", server.URLGet()).Methods("GET")
+			router.HandleFunc("/{id:[a-zA-Z]+}", server.URLGet).Methods("GET")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
 			response := writer.Result()
-			defer response.Body.Close()
+			if err := response.Body.Close(); err != nil {
+				utils.Logger.Warn(err.Error())
+			}
 			assert.Equal(t, tt.want.statusCode, response.StatusCode)
 			assert.Equal(t, tt.want.originURL, response.Header.Get("Location"))
 		})
@@ -244,30 +247,27 @@ func TestUrlShortenJSON(t *testing.T) {
 				},
 			}
 			router := mux.NewRouter()
-			router.HandleFunc("/api/shorten", server.URLShortenJSON()).Methods("POST")
+			router.HandleFunc("/api/shorten", server.URLShortenJSON).Methods("POST")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
 			response := writer.Result()
 			assert.Equal(t, tt.want.statusCode, response.StatusCode)
 			assert.Equal(t, tt.want.contentType, response.Header.Get("Content-Type"))
-
-			if tt.checkBody {
-				type MarshaledBody struct {
-					Result string `json:"result"`
-				}
-				marshaledBody := MarshaledBody{}
-				bytesBody, err := ioutil.ReadAll(response.Body)
-				require.NoError(t, err)
-
-				unmarshalErr := json.Unmarshal(bytesBody, &marshaledBody)
-				require.NoError(t, unmarshalErr)
-				assert.Equal(t, tt.want.lenResultURL, len(marshaledBody.Result))
-
-				err = response.Body.Close()
-				require.NoError(t, err)
+			if !tt.checkBody {
+				return
 			}
 
+			marshalled := make(map[string]string, 0)
+			bytesBody, err := ioutil.ReadAll(response.Body)
+			require.NoError(t, err)
+
+			unmarshalErr := json.Unmarshal(bytesBody, &marshalled)
+			require.NoError(t, unmarshalErr)
+			assert.Equal(t, tt.want.lenResultURL, len(marshalled["result"]))
+
+			err = response.Body.Close()
+			require.NoError(t, err)
 		})
 	}
 }

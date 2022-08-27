@@ -30,7 +30,7 @@ func (p *producer) Close() error {
 	return p.file.Close()
 }
 
-func NewProducer() (*producer, error) {
+func newProducer() (*producer, error) {
 	filename := config.GetConfig().FileStoragePath
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
