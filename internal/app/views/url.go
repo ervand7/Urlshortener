@@ -3,7 +3,6 @@ package views
 import (
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
-	"github.com/ervand7/urlshortener/internal/app/controllers/compress"
 	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	"io"
 	"net/http"
@@ -19,9 +18,9 @@ func (server *Server) URLShorten() func(w http.ResponseWriter, r *http.Request) 
 			http.Error(w, "invalid body", http.StatusBadRequest)
 			return
 		}
-		if r.Header.Get("Content-Encoding") == "gzip" {
-			body, _ = compress.Decompress(body)
-		}
+		//if r.Header.Get("Content-Encoding") == "gzip" {
+		//	body, _ = compress.Decompress(body)
+		//}
 
 		url := string(body)
 		if url == "" {
@@ -75,9 +74,9 @@ func (server *Server) URLShortenJSON() func(w http.ResponseWriter, r *http.Reque
 		)
 
 		bodyBytes, err := io.ReadAll(r.Body)
-		if r.Header.Get("Content-Encoding") == "gzip" {
-			bodyBytes, _ = compress.Decompress(bodyBytes)
-		}
+		//if r.Header.Get("Content-Encoding") == "gzip" {
+		//	bodyBytes, _ = compress.Decompress(bodyBytes)
+		//}
 		if err != nil {
 			http.Error(w, "invalid body", http.StatusBadRequest)
 			return
