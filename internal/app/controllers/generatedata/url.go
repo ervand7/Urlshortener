@@ -1,6 +1,7 @@
-package controllers
+package generatedata
 
 import (
+	"github.com/ervand7/urlshortener/internal/app/config"
 	"math/rand"
 	"time"
 )
@@ -9,10 +10,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-const (
-	BaseURL                = "http://localhost:8080"
-	ShortenEndpointLen int = 5
-)
+const ShortenEndpointLen int = 5
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -22,5 +20,5 @@ func ShortenURL() string {
 		randIndex := rand.Intn(len(letterRunes))
 		result[i] = letterRunes[randIndex]
 	}
-	return BaseURL + "/" + string(result)
+	return config.GetConfig().BaseURL + "/" + string(result)
 }
