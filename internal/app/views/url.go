@@ -11,13 +11,7 @@ import (
 
 // URLShorten POST ("/")
 func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		err := r.Body.Close()
-		if err != nil {
-			utils.Logger.Warn(err.Error())
-		}
-	}()
-
+	defer server.CloseBody(r)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -28,23 +22,14 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "param url not filled", http.StatusBadRequest)
 		return
 	}
+
+	userID := server.GetUserIDFromCookie(w, r)
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 
-	shortenedURL := generatedata.ShortenURL()
-	switch config.GetConfig().FileStoragePath {
-	case "":
-		server.MemoryStorage.Set(shortenedURL, url)
-	default:
-		if err := server.FileStorage.Set(shortenedURL, url); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-	_, writeErr := w.Write([]byte(shortenedURL))
-	if writeErr != nil {
-		utils.Logger.Warn(writeErr.Error())
-	}
+	shortenURL := generatedata.ShortenURL()
+	server.SaveURL(userID, shortenURL, url, w)
+	server.Write([]byte(shortenURL), w)
 }
 
 // URLGet GET ("/{id}")
@@ -74,13 +59,7 @@ func (server *Server) URLGet(w http.ResponseWriter, r *http.Request) {
 
 // URLShortenJSON POST ("/api/shorten")
 func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		err := r.Body.Close()
-		if err != nil {
-			utils.Logger.Warn(err.Error())
-		}
-	}()
-
+	defer server.CloseBody(r)
 	type (
 		ReqBody struct {
 			URL string `json:"url"`
@@ -106,30 +85,44 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenedURL := generatedata.ShortenURL()
+	shortenURL := generatedata.ShortenURL()
 	respBody := RespBody{
-		Result: shortenedURL,
+		Result: shortenURL,
 	}
 	marshaledBody, err := json.Marshal(respBody)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	userID := server.GetUserIDFromCookie(w, r)
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	switch config.GetConfig().FileStoragePath {
-	case "":
-		server.MemoryStorage.Set(shortenedURL, reqBody.URL)
-	default:
-		if err := server.FileStorage.Set(shortenedURL, reqBody.URL); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
+	server.SaveURL(userID, shortenURL, reqBody.URL, w)
+	server.Write(marshaledBody, w)
+}
+
+// URLUserAll GET ("/api/user/urls")
+func (server *Server) URLUserAll(w http.ResponseWriter, r *http.Request) {
+	userID, err := r.Cookie("userID")
+	if err != nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	//decodedUserID, err := server.UserToken.Decode(userID.Value)
+	//if err != nil {
+	//	utils.Logger.Warn(err.Error())
+	//}
+
+	userURLs := server.GetUserURLs(userID.Value)
+	msg, err := json.Marshal(userURLs)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	_, writeErr := w.Write(marshaledBody)
-	if writeErr != nil {
-		utils.Logger.Warn(writeErr.Error())
-	}
+	w.Header().Add("Content-type", "application/json")
+	server.Write(msg, w)
 }

@@ -7,4 +7,4 @@ go test \
   github.com/ervand7/urlshortener/internal/app/models/url \
   github.com/ervand7/urlshortener/internal/app/server \
   github.com/ervand7/urlshortener/internal/app/views \
-  -count 1
+  -count 1 -v
