@@ -75,7 +75,7 @@ func TestUrlShorten(t *testing.T) {
 
 			server := Server{
 				MemoryStorage: &url.MemoryStorage{
-					HashTable: make(map[string]string, 0),
+					HashTable: make(map[string]url.ShortenURLStruct, 0),
 				},
 			}
 			router := mux.NewRouter()
@@ -146,10 +146,10 @@ func TestUrlGet(t *testing.T) {
 
 			server := Server{
 				MemoryStorage: &url.MemoryStorage{
-					HashTable: make(map[string]string, 0),
+					HashTable: make(map[string]url.ShortenURLStruct, 0),
 				},
 			}
-			server.MemoryStorage.Set(tt.shortenedURL, tt.want.originURL)
+			server.MemoryStorage.Set("", tt.shortenedURL, tt.want.originURL)
 
 			request := httptest.NewRequest(tt.method, tt.endpoint, nil)
 			router := mux.NewRouter()
@@ -243,7 +243,7 @@ func TestUrlShortenJSON(t *testing.T) {
 
 			server := Server{
 				MemoryStorage: &url.MemoryStorage{
-					HashTable: make(map[string]string, 0),
+					HashTable: make(map[string]url.ShortenURLStruct, 0),
 				},
 			}
 			router := mux.NewRouter()
@@ -267,6 +267,97 @@ func TestUrlShortenJSON(t *testing.T) {
 			assert.Equal(t, tt.want.lenResultURL, len(marshalled["result"]))
 
 			err = response.Body.Close()
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestURLUserAll(t *testing.T) {
+	type want struct {
+		statusCode int
+		bodyChunk  string
+	}
+	tests := []struct {
+		name      string
+		method    string
+		userID    string
+		checkBody bool
+		setCookie bool
+		want      want
+	}{
+		{
+			name:      "success 200",
+			method:    http.MethodGet,
+			checkBody: true,
+			setCookie: true,
+			want: want{
+				statusCode: 200,
+				bodyChunk:  `[{"original_url":"https://hello.world/","short_url":"http://localhost:8080/`,
+			},
+		},
+		{
+			name:      "success 204",
+			method:    http.MethodGet,
+			checkBody: false,
+			setCookie: false,
+			want: want{
+				statusCode: 204,
+			},
+		},
+		{
+			name:      "fail 405",
+			method:    http.MethodPost,
+			checkBody: false,
+			setCookie: false,
+			want: want{
+				statusCode: 405,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := Server{
+				MemoryStorage: &url.MemoryStorage{
+					HashTable: make(map[string]url.ShortenURLStruct, 0),
+				},
+			}
+			requestPOST := httptest.NewRequest(
+				http.MethodPost,
+				"/api/shorten",
+				bytes.NewBuffer([]byte(`{"url":"https://hello.world/"}`)),
+			)
+			router1 := mux.NewRouter()
+			router1.HandleFunc("/api/shorten", server.URLShortenJSON).Methods("POST")
+			writer1 := httptest.NewRecorder()
+			router1.ServeHTTP(writer1, requestPOST)
+
+			responsePOST := writer1.Result()
+			cookies := responsePOST.Cookies()
+			assert.Equal(t, cookies[0].Name, "userID")
+			assert.NotEmpty(t, cookies[0].Value)
+			err := responsePOST.Body.Close()
+			require.NoError(t, err)
+
+			requestGET := httptest.NewRequest(tt.method, "/api/user/urls", nil)
+			if tt.setCookie {
+				cookie := &http.Cookie{Name: "userID", Value: cookies[0].Value, HttpOnly: true}
+				requestGET.AddCookie(cookie)
+			}
+			router2 := mux.NewRouter()
+			writer2 := httptest.NewRecorder()
+			router2.HandleFunc("/api/user/urls", server.URLUserAll).Methods("GET")
+			router2.ServeHTTP(writer2, requestGET)
+
+			responseGET := writer2.Result()
+			assert.Equal(t, responseGET.StatusCode, tt.want.statusCode)
+
+			if tt.checkBody == false {
+				return
+			}
+			body, err := ioutil.ReadAll(responseGET.Body)
+			require.NoError(t, err)
+			assert.Contains(t, string(body), tt.want.bodyChunk)
+			err = responseGET.Body.Close()
 			require.NoError(t, err)
 		})
 	}

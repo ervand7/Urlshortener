@@ -17,7 +17,7 @@ func newRouter() chi.Router {
 
 	server := views.Server{
 		MemoryStorage: &url.MemoryStorage{
-			HashTable: make(map[string]string, 0),
+			HashTable: make(map[string]url.ShortenURLStruct, 0),
 		},
 		FileStorage: &url.FileStorage{},
 	}
@@ -25,6 +25,7 @@ func newRouter() chi.Router {
 		r.Post("/", server.URLShorten)
 		r.Post("/api/shorten", server.URLShortenJSON)
 		r.Get("/{id:[a-zA-Z]+}", server.URLGet)
+		r.Get("/api/user/urls", server.URLUserAll)
 	})
 
 	return r
