@@ -43,7 +43,8 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 	}
 	_, writeErr := w.Write([]byte(shortenedURL))
 	if writeErr != nil {
-		utils.Logger.Warn(writeErr.Error())
+
+		utils.Logger.Warn(writeErr.Error() + "")
 	}
 }
 
