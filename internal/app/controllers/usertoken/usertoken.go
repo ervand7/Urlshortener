@@ -8,10 +8,9 @@ import (
 )
 
 type UserToken struct {
-	Key       [32]byte
-	nonce     []byte
-	encrypted []byte
-	aesGCM    cipher.AEAD
+	Key    [32]byte
+	Nonce  []byte
+	AesGCM cipher.AEAD
 }
 
 func generateRandom(size int) ([]byte, error) {
@@ -29,21 +28,21 @@ func (u *UserToken) Encode(src string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	u.aesGCM, err = cipher.NewGCM(aesCipher)
+	u.AesGCM, err = cipher.NewGCM(aesCipher)
 	if err != nil {
 		return "", err
 	}
 
-	u.nonce, err = generateRandom(u.aesGCM.NonceSize())
+	u.Nonce, err = generateRandom(u.AesGCM.NonceSize())
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 		return "", err
 	}
-	u.encrypted = u.aesGCM.Seal(nil, u.nonce, []byte(src), nil) // зашифровываем
-	return string(u.encrypted), nil
+	result := u.AesGCM.Seal(nil, u.Nonce, []byte(src), nil) // зашифровываем
+	return string(result), nil
 }
-func (u *UserToken) Decode(encrypted string) (decrypted string, err error) {
-	result, err := u.aesGCM.Open(nil, u.nonce, []byte(encrypted), nil) // расшифровываем
+func (u *UserToken) Decode(Encrypted string) (decrypted string, err error) {
+	result, err := u.AesGCM.Open(nil, u.Nonce, []byte(Encrypted), nil) // расшифровываем
 	if err != nil {
 		return "", err
 	}

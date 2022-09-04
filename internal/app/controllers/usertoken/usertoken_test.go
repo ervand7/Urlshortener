@@ -13,9 +13,9 @@ func TestUserToken(t *testing.T) {
 
 	encoded, err := userToken.Encode(src)
 	assert.NoError(t, err)
-	assert.NotEqual(t, string(encoded), src)
+	assert.NotEqual(t, encoded, src)
 
-	decoded, err := userToken.Decode(string(encoded))
+	decoded, err := userToken.Decode(encoded)
 	assert.NoError(t, err)
 	assert.Equal(t, decoded, src)
 }

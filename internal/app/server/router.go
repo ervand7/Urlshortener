@@ -22,7 +22,7 @@ func newRouter() chi.Router {
 			HashTable: make(map[string]url.ShortenURLStruct, 0),
 		},
 		FileStorage: &url.FileStorage{},
-		UserToken: usertoken.UserToken{
+		UserToken: &usertoken.UserToken{
 			Key: sha256.Sum256([]byte("x35k9f")),
 		},
 	}
