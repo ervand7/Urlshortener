@@ -26,11 +26,13 @@ func newRouter() chi.Router {
 			Key: sha256.Sum256([]byte("x35k9f")),
 		},
 	}
+
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.URLShorten)
 		r.Post("/api/shorten", server.URLShortenJSON)
 		r.Get("/{id:[a-zA-Z]+}", server.URLGet)
 		r.Get("/api/user/urls", server.URLUserAll)
+		r.Get("/ping", server.DBPing)
 	})
 
 	return r
