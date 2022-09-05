@@ -1,7 +1,6 @@
 package views
 
 import (
-	"fmt"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers/usertoken"
 	"github.com/ervand7/urlshortener/internal/app/models/url"
@@ -69,9 +68,9 @@ func (server Server) GetUserURLs(userID string) (userURLs []map[string]string) {
 
 func (server Server) setCookie(userID string, w http.ResponseWriter) {
 	encodedUserID, _ := server.UserToken.Encode(userID)
-	fmt.Println("+++++++++++", server.UserToken.Key)
-	fmt.Println("+++++++++++", server.UserToken.Nonce)
-	fmt.Println("+++++++++++", server.UserToken.AesGCM)
+	//fmt.Println("+++++++++++", server.UserToken.Key)
+	//fmt.Println("+++++++++++", server.UserToken.Nonce)
+	//fmt.Println("+++++++++++", server.UserToken.AesGCM)
 	cookie := &http.Cookie{Name: "userID", Value: encodedUserID, HttpOnly: true}
 	http.SetCookie(w, cookie)
 }
