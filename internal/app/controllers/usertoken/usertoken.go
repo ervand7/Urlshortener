@@ -39,7 +39,7 @@ func (u *UserToken) Encode(src string) (string, error) {
 		return "", err
 	}
 	result := u.AesGCM.Seal(nil, u.Nonce, []byte(src), nil) // зашифровываем
-	return fmt.Sprintf("%x", result), nil
+	return string(result), nil
 }
 func (u *UserToken) Decode(Encrypted string) (decrypted string, err error) {
 	fmt.Println("---------вот такой UserID мы получаем из куки перед тем как его декодировать: ", Encrypted)
