@@ -42,6 +42,7 @@ func (u *UserToken) Encode(src string) (string, error) {
 	return fmt.Sprintf("%x", result), nil
 }
 func (u *UserToken) Decode(Encrypted string) (decrypted string, err error) {
+	fmt.Println("---------вот такой UserID мы получаем из куки перед тем как его декодировать: ", Encrypted)
 	result, err := u.AesGCM.Open(nil, u.Nonce, []byte(Encrypted), nil) // расшифровываем
 	if err != nil {
 		return "", err

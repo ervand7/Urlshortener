@@ -69,6 +69,7 @@ func (server Server) GetUserIDFromCookie(w http.ResponseWriter, r *http.Request)
 
 func (server Server) setCookie(userID string, w http.ResponseWriter) {
 	encodedUserID, _ := server.UserToken.Encode(userID)
+	fmt.Println("+++++++++++Закодированный UserID, который пойдет в куку: encodedUserID")
 	fmt.Println("+++++++++++Key на момент кодирования: ", server.UserToken.Key)
 	fmt.Println("+++++++++++Nonce на момент кодирования: ", server.UserToken.Nonce)
 	fmt.Println("+++++++++++AesGCM на момент кодирования: ", server.UserToken.AesGCM)
