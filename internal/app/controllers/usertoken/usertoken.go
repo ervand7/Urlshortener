@@ -39,7 +39,7 @@ func (u *UserToken) Encode(src string) (string, error) {
 		return "", err
 	}
 	result := u.AesGCM.Seal(nil, u.Nonce, []byte(src), nil) // зашифровываем
-	return string(result), nil
+	return fmt.Sprintf("%x", result), nil
 }
 func (u *UserToken) Decode(Encrypted string) (decrypted string, err error) {
 	result, err := u.AesGCM.Open(nil, u.Nonce, []byte(Encrypted), nil) // расшифровываем

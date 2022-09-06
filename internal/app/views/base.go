@@ -1,6 +1,7 @@
 package views
 
 import (
+	"fmt"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers/usertoken"
 	"github.com/ervand7/urlshortener/internal/app/models/url"
@@ -13,17 +14,6 @@ type Server struct {
 	MemoryStorage *url.MemoryStorage
 	FileStorage   *url.FileStorage
 	UserToken     *usertoken.UserToken
-}
-
-func (server Server) GetUserIDFromCookie(w http.ResponseWriter, r *http.Request) (userID string) {
-	userIDFromCookie, err := r.Cookie("userID")
-	if err != nil {
-		userID = uuid.New().String()
-		server.setCookie(userID, w)
-	} else {
-		userID = userIDFromCookie.Value
-	}
-	return userID
 }
 
 func (server Server) CloseBody(r *http.Request) {
@@ -66,11 +56,22 @@ func (server Server) GetUserURLs(userID string) (userURLs []map[string]string) {
 	return userURLs
 }
 
+func (server Server) GetUserIDFromCookie(w http.ResponseWriter, r *http.Request) (userID string) {
+	userIDFromCookie, err := r.Cookie("userID")
+	if err != nil {
+		userID = uuid.New().String()
+		server.setCookie(userID, w)
+	} else {
+		userID = userIDFromCookie.Value
+	}
+	return userID
+}
+
 func (server Server) setCookie(userID string, w http.ResponseWriter) {
 	encodedUserID, _ := server.UserToken.Encode(userID)
-	//fmt.Println("+++++++++++", server.UserToken.Key)
-	//fmt.Println("+++++++++++", server.UserToken.Nonce)
-	//fmt.Println("+++++++++++", server.UserToken.AesGCM)
+	fmt.Println("+++++++++++Key на момент кодирования: ", server.UserToken.Key)
+	fmt.Println("+++++++++++Nonce на момент кодирования: ", server.UserToken.Nonce)
+	fmt.Println("+++++++++++AesGCM на момент кодирования: ", server.UserToken.AesGCM)
 	cookie := &http.Cookie{Name: "userID", Value: encodedUserID, HttpOnly: true}
 	http.SetCookie(w, cookie)
 }
