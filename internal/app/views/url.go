@@ -1,8 +1,8 @@
 package views
 
 import (
+	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	"github.com/ervand7/urlshortener/internal/app/utils"
@@ -111,15 +111,14 @@ func (server *Server) URLUserAll(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 		return
 	}
-	fmt.Println("-----------Key на момент декодирования: ", server.UserToken.Key)
-	fmt.Println("-----------Nonce на момент декодирования: ", server.UserToken.Nonce)
-	fmt.Println("-----------AesGCM на момент декодирования: ", server.UserToken.AesGCM)
-	decodedUserID, _ := server.UserToken.Decode(userID.Value)
+
+	decoded, _ := hex.DecodeString(userID.Value)
+
 	if err != nil {
 		utils.Logger.Warn(err.Error())
 	}
 
-	userURLs := server.GetUserURLs(decodedUserID)
+	userURLs := server.GetUserURLs(string(decoded))
 	msg, err := json.Marshal(userURLs)
 	if err != nil {
 		utils.Logger.Error(err.Error())

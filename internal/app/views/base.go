@@ -1,9 +1,10 @@
 package views
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/ervand7/urlshortener/internal/app/config"
-	"github.com/ervand7/urlshortener/internal/app/controllers/usertoken"
+	//"github.com/ervand7/urlshortener/internal/app/controllers/usertoken"
 	"github.com/ervand7/urlshortener/internal/app/models/url"
 	"github.com/ervand7/urlshortener/internal/app/utils"
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ import (
 type Server struct {
 	MemoryStorage *url.MemoryStorage
 	FileStorage   *url.FileStorage
-	UserToken     *usertoken.UserToken
+	//UserToken     *usertoken.UserToken
 }
 
 func (server Server) CloseBody(r *http.Request) {
@@ -68,11 +69,8 @@ func (server Server) GetUserIDFromCookie(w http.ResponseWriter, r *http.Request)
 }
 
 func (server Server) setCookie(userID string, w http.ResponseWriter) {
-	encodedUserID, _ := server.UserToken.Encode(userID)
+	encodedUserID := hex.EncodeToString([]byte(userID))
 	fmt.Println("+++++++++++Закодированный UserID, который пойдет в куку: ", encodedUserID)
-	fmt.Println("+++++++++++Key на момент кодирования: ", server.UserToken.Key)
-	fmt.Println("+++++++++++Nonce на момент кодирования: ", server.UserToken.Nonce)
-	fmt.Println("+++++++++++AesGCM на момент кодирования: ", server.UserToken.AesGCM)
 	cookie := &http.Cookie{Name: "userID", Value: encodedUserID, HttpOnly: true}
 	http.SetCookie(w, cookie)
 }

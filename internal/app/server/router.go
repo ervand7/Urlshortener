@@ -1,8 +1,6 @@
 package server
 
 import (
-	"crypto/sha256"
-	"github.com/ervand7/urlshortener/internal/app/controllers/usertoken"
 	"github.com/ervand7/urlshortener/internal/app/models/url"
 	"github.com/ervand7/urlshortener/internal/app/views"
 	"github.com/go-chi/chi/v5"
@@ -22,9 +20,9 @@ func newRouter() chi.Router {
 			HashTable: make(map[string]url.ShortenURLStruct, 0),
 		},
 		FileStorage: &url.FileStorage{},
-		UserToken: &usertoken.UserToken{
-			Key: sha256.Sum256([]byte("x35k9f")),
-		},
+		//UserToken: &usertoken.UserToken{
+		//	Key: sha256.Sum256([]byte("x35k9f")),
+		//},
 	}
 	r.Route("/", func(r chi.Router) {
 		r.Post("/", server.URLShorten)
