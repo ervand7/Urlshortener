@@ -24,38 +24,29 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := server.GetUserIDFromCookie(w, r)
+	userID := server.GetOrCreateUserIDFromCookie(w, r)
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 
-	shortenURL := generatedata.ShortenURL()
-	server.SaveURL(userID, shortenURL, url, w)
-	server.Write([]byte(shortenURL), w)
+	short := generatedata.ShortenURL()
+	server.SaveURL(userID, short, url, w)
+	server.Write([]byte(short), w)
 }
 
 // URLGet GET ("/{id}")
 func (server *Server) URLGet(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.URL.Path
-	shortenedURL := config.GetConfig().BaseURL + endpoint
-	var originURL string
-
-	switch config.GetConfig().FileStoragePath {
-	case "":
-		originURL = server.MemoryStorage.Get(shortenedURL)
-	default:
-		result, err := server.FileStorage.Get(shortenedURL)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		originURL = result
+	short := config.GetConfig().BaseURL + endpoint
+	origin, err := server.GetOriginByShort(short)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-
-	if originURL == "" {
+	if origin == "" {
 		http.Error(w, "not exists", http.StatusBadRequest)
 		return
 	}
-	http.Redirect(w, r, originURL, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, origin, http.StatusTemporaryRedirect)
 }
 
 // URLShortenJSON POST ("/api/shorten")
@@ -86,9 +77,9 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortenURL := generatedata.ShortenURL()
+	short := generatedata.ShortenURL()
 	respBody := RespBody{
-		Result: shortenURL,
+		Result: short,
 	}
 	marshaledBody, err := json.Marshal(respBody)
 	if err != nil {
@@ -96,11 +87,11 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := server.GetUserIDFromCookie(w, r)
+	userID := server.GetOrCreateUserIDFromCookie(w, r)
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	server.SaveURL(userID, shortenURL, reqBody.URL, w)
+	server.SaveURL(userID, short, reqBody.URL, w)
 	server.Write(marshaledBody, w)
 }
 
@@ -116,14 +107,19 @@ func (server *Server) URLUserAll(w http.ResponseWriter, r *http.Request) {
 		utils.Logger.Error(err.Error())
 	}
 
-	userURLs := server.GetUserURLs(string(decodedUserID))
-	msg, err := json.Marshal(userURLs)
+	userURLs, err := server.GetUserURLs(string(decodedUserID))
 	if err != nil {
 		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	msg, err := json.Marshal(userURLs)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	w.Header().Add("Content-type", "application/json")
 	server.Write(msg, w)
 }

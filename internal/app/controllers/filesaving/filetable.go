@@ -1,10 +1,10 @@
-package filetable
+package filesaving
 
 import "github.com/ervand7/urlshortener/internal/app/utils"
 
 type FileTable struct{}
 
-func (f FileTable) Get(key string) (originURL string, err error) {
+func (f FileTable) Get(short string) (origin string, err error) {
 	consumer, err := newConsumer()
 	if err != nil {
 		return "", err
@@ -19,14 +19,14 @@ func (f FileTable) Get(key string) (originURL string, err error) {
 	if readEventErr != nil {
 		return "", readEventErr
 	}
-	originURL, exists := urlMap[key]
+	origin, exists := urlMap[short]
 	if !exists {
 		return "", nil
 	}
-	return originURL, nil
+	return origin, nil
 }
 
-func (f FileTable) Set(key, value string) error {
+func (f FileTable) Set(short, origin string) error {
 	producer, err := newProducer()
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (f FileTable) Set(key, value string) error {
 	}()
 
 	urlMap := make(map[string]string, 0)
-	urlMap[key] = value
+	urlMap[short] = origin
 	if err := producer.WriteEvent(urlMap); err != nil {
 		return err
 	}

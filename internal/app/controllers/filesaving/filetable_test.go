@@ -1,4 +1,4 @@
-package filetable
+package filesaving
 
 import (
 	"github.com/ervand7/urlshortener/internal/app/config"

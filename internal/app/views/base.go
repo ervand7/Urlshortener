@@ -12,24 +12,30 @@ import (
 type Server struct {
 	MemoryStorage *url.MemoryStorage
 	FileStorage   *url.FileStorage
+	DBStorage     *url.DBStorage
 }
 
-func (server Server) GetUserIDFromCookie(w http.ResponseWriter, r *http.Request) (userID string) {
+func (server Server) GetOrCreateUserIDFromCookie(w http.ResponseWriter, r *http.Request) (userID string) {
 	userIDFromCookie, err := r.Cookie("userID")
 	if err != nil {
 		userID = uuid.New().String()
-		server.setCookie(userID, w)
+		encoded := hex.EncodeToString([]byte(userID))
+		server.setCookie(encoded, w)
 	} else {
-		userID = userIDFromCookie.Value
+		encoded := userIDFromCookie.Value
+		decoded, err := hex.DecodeString(encoded)
+		if err != nil {
+			utils.Logger.Error(err.Error())
+			return ""
+		}
+		userID = string(decoded)
 	}
 	return userID
 }
 
-func (server Server) CloseBody(r *http.Request) {
-	err := r.Body.Close()
-	if err != nil {
-		utils.Logger.Warn(err.Error())
-	}
+func (server Server) setCookie(encodedUserID string, w http.ResponseWriter) {
+	cookie := &http.Cookie{Name: "userID", Value: encodedUserID, HttpOnly: true}
+	http.SetCookie(w, cookie)
 }
 
 func (server Server) Write(msg []byte, w http.ResponseWriter) {
@@ -39,34 +45,62 @@ func (server Server) Write(msg []byte, w http.ResponseWriter) {
 	}
 }
 
+func (server Server) CloseBody(r *http.Request) {
+	err := r.Body.Close()
+	if err != nil {
+		utils.Logger.Warn(err.Error())
+	}
+}
+
 func (server Server) SaveURL(userID, shorten, origin string, w http.ResponseWriter) {
-	switch config.GetConfig().FileStoragePath {
-	case "":
-		server.MemoryStorage.Set(userID, shorten, origin)
-	default:
+	if config.GetConfig().DatabaseDSN != "" {
+		if err := server.DBStorage.Set(userID, shorten, origin); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		return
+	}
+	if config.GetConfig().FileStoragePath != "" {
 		if err := server.FileStorage.Set(shorten, origin); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		return
 	}
+	server.MemoryStorage.Set(userID, shorten, origin)
 }
 
-func (server Server) GetUserURLs(userID string) (userURLs []map[string]string) {
-	userURLs = make([]map[string]string, 0)
-	for _, data := range server.MemoryStorage.HashTable {
-		if data.UserID == userID {
-			pair := map[string]string{
-				"short_url":    data.Shorten,
-				"original_url": data.Origin,
-			}
-			userURLs = append(userURLs, pair)
+func (server Server) GetOriginByShort(short string) (origin string, err error) {
+	if config.GetConfig().DatabaseDSN != "" {
+		origin, err = server.DBStorage.Get(short)
+		if err != nil {
+			return "", err
 		}
+		return origin, nil
 	}
-	return userURLs
+	if config.GetConfig().FileStoragePath != "" {
+		origin, err = server.FileStorage.Get(short)
+		if err != nil {
+			return "", nil
+		}
+		return origin, nil
+	}
+	origin = server.MemoryStorage.Get(short)
+	return origin, nil
 }
 
-func (server Server) setCookie(userID string, w http.ResponseWriter) {
-	encodedUserID := hex.EncodeToString([]byte(userID))
-	cookie := &http.Cookie{Name: "userID", Value: encodedUserID, HttpOnly: true}
-	http.SetCookie(w, cookie)
+func (server Server) GetUserURLs(userID string) (userURLs []map[string]string, err error) {
+	if config.GetConfig().DatabaseDSN != "" {
+		userURLs, err = server.DBStorage.GetUserURLs(userID)
+		if err != nil {
+			return nil, err
+		}
+		return userURLs, nil
+	}
+
+	userURLs, err = server.MemoryStorage.GetUserURLs(userID)
+	if err != nil {
+		return nil, err
+	}
+	return userURLs, nil
 }
