@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
-	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
+	g "github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	"github.com/ervand7/urlshortener/internal/app/utils"
 	"io"
 	"net/http"
@@ -25,11 +25,14 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := server.GetOrCreateUserIDFromCookie(w, r)
+	short := g.ShortenURL()
+	if err := server.SaveURL(userID, short, url, r); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-
-	short := generatedata.ShortenURL()
-	server.SaveURL(userID, short, url, w)
 	server.Write([]byte(short), w)
 }
 
@@ -37,7 +40,7 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 func (server *Server) URLGet(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.URL.Path
 	short := config.GetConfig().BaseURL + endpoint
-	origin, err := server.GetOriginByShort(short)
+	origin, err := server.GetOriginByShort(short, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -77,7 +80,7 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	short := generatedata.ShortenURL()
+	short := g.ShortenURL()
 	respBody := RespBody{
 		Result: short,
 	}
@@ -88,10 +91,13 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := server.GetOrCreateUserIDFromCookie(w, r)
+	if err = server.SaveURL(userID, short, reqBody.URL, r); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-
-	server.SaveURL(userID, short, reqBody.URL, w)
 	server.Write(marshaledBody, w)
 }
 
@@ -104,22 +110,82 @@ func (server *Server) URLUserAll(w http.ResponseWriter, r *http.Request) {
 	}
 	decodedUserID, err := hex.DecodeString(userID.Value)
 	if err != nil {
-		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-	userURLs, err := server.GetUserURLs(string(decodedUserID))
+	userURLs, err := server.GetUserURLs(string(decodedUserID), r)
 	if err != nil {
-		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	msg, err := json.Marshal(userURLs)
 	if err != nil {
-		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Add("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	server.Write(msg, w)
+}
+
+// URLShortenBatch POST ("/api/shorten/batch")
+func (server *Server) URLShortenBatch(w http.ResponseWriter, r *http.Request) {
+	defer server.CloseBody(r)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if len(body) == 0 {
+		http.Error(w, "body is empty", http.StatusBadRequest)
+		return
+	}
+
+	type (
+		ReqPair struct {
+			CorrelationID string `json:"correlation_id"`
+			OriginURL     string `json:"original_url"`
+		}
+		RespPair struct {
+			CorrelationID string `json:"correlation_id"`
+			ShortURL      string `json:"short_url"`
+		}
+	)
+	var (
+		reqPairs  []ReqPair
+		respPairs []RespPair
+		dbEntries []utils.DBEntry
+	)
+
+	if err := json.Unmarshal(body, &reqPairs); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userID := server.GetOrCreateUserIDFromCookie(w, r)
+	for _, val := range reqPairs {
+		short := g.ShortenURL()
+		respPair := RespPair{CorrelationID: val.CorrelationID, ShortURL: short}
+		respPairs = append(respPairs, respPair)
+
+		entry := utils.DBEntry{UserID: userID, Short: short, Origin: val.OriginURL}
+		dbEntries = append(dbEntries, entry)
+	}
+
+	marshaledBody, err := json.Marshal(respPairs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = server.SaveURLs(dbEntries, r); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	server.Write(marshaledBody, w)
 }
