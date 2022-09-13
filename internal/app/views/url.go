@@ -3,6 +3,7 @@ package views
 import (
 	"encoding/hex"
 	"encoding/json"
+	"github.com/ervand7/urlshortener/internal/app/apperrors"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	g "github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	"github.com/ervand7/urlshortener/internal/app/utils"
@@ -18,21 +19,31 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	url := string(body)
-	if url == "" {
+	origin := string(body)
+	if origin == "" {
 		http.Error(w, "param url not filled", http.StatusBadRequest)
 		return
 	}
-
 	userID := server.GetOrCreateUserIDFromCookie(w, r)
 	short := g.ShortenURL()
-	if err := server.SaveURL(userID, short, url, r); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+
+	httpStatus := http.StatusCreated
+	if err := server.SaveURL(userID, short, origin, r); err != nil {
+		if _, ok := err.(*apperrors.ShortAlreadyExistsError); ok {
+			short, err = server.DBStorage.GetShortByOrigin(r.Context(), origin)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			httpStatus = http.StatusConflict
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(httpStatus)
 	server.Write([]byte(short), w)
 }
 
@@ -84,20 +95,30 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 	respBody := RespBody{
 		Result: short,
 	}
+	userID := server.GetOrCreateUserIDFromCookie(w, r)
+
+	httpStatus := http.StatusCreated
+	if err = server.SaveURL(userID, short, reqBody.URL, r); err != nil {
+		if _, ok := err.(*apperrors.ShortAlreadyExistsError); ok {
+			respBody.Result, err = server.DBStorage.GetShortByOrigin(r.Context(), reqBody.URL)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			httpStatus = http.StatusConflict
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	marshaledBody, err := json.Marshal(respBody)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	userID := server.GetOrCreateUserIDFromCookie(w, r)
-	if err = server.SaveURL(userID, short, reqBody.URL, r); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Add("Content-type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(httpStatus)
 	server.Write(marshaledBody, w)
 }
 

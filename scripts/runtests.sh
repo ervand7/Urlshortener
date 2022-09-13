@@ -9,7 +9,7 @@ go test \
   -count 1 -v
 
 go test github.com/ervand7/urlshortener/internal/app/models/url/ \
- -run TestFileStorage TestMemoryStorage
+ -run TestFileStorage TestMemoryStorage -count 1 -v
 
 export DATABASE_DSN='user=ervand password=ervand dbname=urlshortener_test host=localhost port=5432 sslmode=disable'
 go test github.com/ervand7/urlshortener/internal/app/models/url/ \
@@ -17,4 +17,7 @@ go test github.com/ervand7/urlshortener/internal/app/models/url/ \
   -count 1 -v
 go test github.com/ervand7/urlshortener/internal/app/views/ \
   -run TestURLShortenBatch \
+  -count 1 -v
+go test github.com/ervand7/urlshortener/internal/app/views/ \
+  -run Test409 \
   -count 1 -v

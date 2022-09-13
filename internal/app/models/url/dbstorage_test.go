@@ -71,7 +71,7 @@ func TestDBStorage_Get(t *testing.T) {
 	err := dbStorage.Set(ctx, userID, short, origin)
 	assert.NoError(t, err)
 
-	result, err := dbStorage.Get(ctx, short)
+	result, err := dbStorage.GetOriginByShort(ctx, short)
 	assert.NoError(t, err)
 	assert.Equal(t, result, origin)
 }

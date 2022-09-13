@@ -96,7 +96,7 @@ func (server Server) GetOriginByShort(
 	if config.GetConfig().DatabaseDSN != "" {
 		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
 		defer cancel()
-		origin, err = server.DBStorage.Get(ctx, short)
+		origin, err = server.DBStorage.GetOriginByShort(ctx, short)
 		if err != nil {
 			return "", err
 		}
