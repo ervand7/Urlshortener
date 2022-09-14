@@ -2,6 +2,7 @@ package url
 
 import (
 	"context"
+	"github.com/ervand7/urlshortener/internal/app/apperrors"
 	"github.com/ervand7/urlshortener/internal/app/database"
 	"github.com/ervand7/urlshortener/internal/app/utils"
 	q "github.com/ervand7/urlshortener/internal/app/utils/rawqueries"
@@ -14,9 +15,26 @@ type DBStorage struct {
 }
 
 func (d *DBStorage) Set(ctx context.Context, userID, short, origin string) error {
-	_, err := d.DB.Conn.ExecContext(ctx, q.Set, userID, short, origin)
+	var existsShort string
+	rows, err := d.DB.Conn.QueryContext(ctx, q.Set, userID, short, origin)
 	if err != nil {
 		return err
+	}
+	defer d.DB.CloseRows(rows)
+
+	for rows.Next() {
+		err = rows.Scan(&existsShort)
+		if err != nil {
+			return err
+		}
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+
+	if existsShort != "null" {
+		return apperrors.NewShortAlreadyExistsError(existsShort)
 	}
 
 	return nil
@@ -34,7 +52,7 @@ func (d *DBStorage) SetMany(ctx context.Context, dbEntries []utils.DBEntry) erro
 		}
 	}()
 
-	stmt, err := transaction.PrepareContext(ctx, q.SetMany)
+	stmt, err := transaction.PrepareContext(ctx, q.Set)
 	if err != nil {
 		return err
 	}
@@ -61,20 +79,18 @@ func (d *DBStorage) Get(ctx context.Context, short string) (origin string, err e
 	}
 	defer d.DB.CloseRows(rows)
 
-	container := make([]string, 0)
 	for rows.Next() {
 		err = rows.Scan(&origin)
 		if err != nil {
 			return "", err
 		}
-		container = append(container, origin)
 	}
 	err = rows.Err()
 	if err != nil {
 		return "", err
 	}
 
-	return container[0], nil
+	return origin, nil
 }
 
 func (d *DBStorage) GetUserURLs(

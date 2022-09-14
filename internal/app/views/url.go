@@ -3,6 +3,7 @@ package views
 import (
 	"encoding/hex"
 	"encoding/json"
+	"github.com/ervand7/urlshortener/internal/app/apperrors"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	g "github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	"github.com/ervand7/urlshortener/internal/app/utils"
@@ -26,13 +27,19 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 
 	userID := server.GetOrCreateUserIDFromCookie(w, r)
 	short := g.ShortenURL()
+	httpStatus := http.StatusCreated
 	if err := server.SaveURL(userID, short, url, r); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		if errData, ok := err.(*apperrors.ShortAlreadyExistsError); ok {
+			short = errData.Error()
+			httpStatus = http.StatusConflict
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.Header().Add("Content-type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(httpStatus)
 	server.Write([]byte(short), w)
 }
 
@@ -80,7 +87,19 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID := server.GetOrCreateUserIDFromCookie(w, r)
 	short := g.ShortenURL()
+	httpStatus := http.StatusCreated
+	if err = server.SaveURL(userID, short, reqBody.URL, r); err != nil {
+		if errData, ok := err.(*apperrors.ShortAlreadyExistsError); ok {
+			short = errData.Error()
+			httpStatus = http.StatusConflict
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
 	respBody := RespBody{
 		Result: short,
 	}
@@ -90,14 +109,8 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID := server.GetOrCreateUserIDFromCookie(w, r)
-	if err = server.SaveURL(userID, short, reqBody.URL, r); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Add("Content-type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(httpStatus)
 	server.Write(marshaledBody, w)
 }
 

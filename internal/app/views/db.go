@@ -11,6 +11,7 @@ import (
 func (server *Server) DBPing(w http.ResponseWriter, r *http.Request) {
 	err := os.Setenv("DATABASE_DSN", "user=ervand password=ervand dbname=urlshortener host=localhost port=5432 sslmode=disable")
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -25,6 +26,7 @@ func (server *Server) DBPing(w http.ResponseWriter, r *http.Request) {
 	}()
 	err = d.DB.ConnStart()
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

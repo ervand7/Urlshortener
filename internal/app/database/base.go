@@ -58,6 +58,6 @@ func (d *Database) CreateAll() error {
 
 func (d *Database) CloseRows(rows *sql.Rows) {
 	if err := rows.Close(); err != nil {
-		utils.Logger.Fatal(err.Error())
+		utils.Logger.Error(err.Error())
 	}
 }
