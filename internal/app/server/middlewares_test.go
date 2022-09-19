@@ -15,8 +15,10 @@ func TestGzipMiddleware(t *testing.T) {
 
 	var b bytes.Buffer
 	gw := gzip.NewWriter(&b)
-	gw.Write([]byte(message))
-	gw.Close()
+	_, err := gw.Write([]byte(message))
+	assert.NoError(t, err)
+	err = gw.Close()
+	assert.NoError(t, err)
 
 	r := http.Request{
 		Body: io.NopCloser(
@@ -32,7 +34,8 @@ func TestGzipMiddleware(t *testing.T) {
 	wrapped := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		decompressed, err := io.ReadAll(r.Body)
 		assert.NoError(t, err)
-		r.Body.Close()
+		err = r.Body.Close()
+		assert.NoError(t, err)
 		assert.Equal(t, message, string(decompressed))
 	})
 	GzipMiddleware(wrapped).ServeHTTP(

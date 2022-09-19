@@ -1,9 +1,9 @@
-package url
+package urlstorage
 
 import (
 	"context"
 	d "github.com/ervand7/urlshortener/internal/app/database"
-	q "github.com/ervand7/urlshortener/internal/app/utils/rawqueries"
+	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -14,10 +14,12 @@ func TestDBStorage_Set(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != "user=ervand password=ervand dbname=urlshortener_test host=localhost port=5432 sslmode=disable" {
 		return
 	}
-	d.ManageDB()
-	dbStorage := DBStorage{DB: d.DB}
+
+	db := d.Database{}
+	db.Run()
+	dbStorage := DBStorage{DB: db}
 	defer func() {
-		_, err := dbStorage.DB.Conn.Exec(q.DropAll)
+		_, err := db.Conn.Exec(q.DropAll)
 		assert.NoError(t, err)
 	}()
 
@@ -35,9 +37,12 @@ func TestDBStorage_Set(t *testing.T) {
 		short  string
 		origin string
 	}
-	rows, err := d.DB.Conn.Query("select * from url")
+	rows, err := db.Conn.Query("select * from url")
 	assert.NoError(t, err)
-	defer rows.Close()
+	defer func() {
+		err := rows.Close()
+		assert.NoError(t, err)
+	}()
 
 	var entry Entry
 	for rows.Next() {
@@ -56,10 +61,12 @@ func TestDBStorage_Get(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != "user=ervand password=ervand dbname=urlshortener_test host=localhost port=5432 sslmode=disable" {
 		return
 	}
-	d.ManageDB()
-	dbStorage := DBStorage{DB: d.DB}
+
+	db := d.Database{}
+	db.Run()
+	dbStorage := DBStorage{DB: db}
 	defer func() {
-		_, err := dbStorage.DB.Conn.Exec(q.DropAll)
+		_, err := db.Conn.Exec(q.DropAll)
 		assert.NoError(t, err)
 	}()
 

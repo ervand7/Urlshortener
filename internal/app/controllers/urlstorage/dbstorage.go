@@ -1,11 +1,11 @@
-package url
+package urlstorage
 
 import (
 	"context"
-	"github.com/ervand7/urlshortener/internal/app/apperrors"
 	"github.com/ervand7/urlshortener/internal/app/database"
+	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
+	"github.com/ervand7/urlshortener/internal/app/errors"
 	"github.com/ervand7/urlshortener/internal/app/utils"
-	q "github.com/ervand7/urlshortener/internal/app/utils/rawqueries"
 	"sync"
 )
 
@@ -34,7 +34,7 @@ func (d *DBStorage) Set(ctx context.Context, userID, short, origin string) error
 	}
 
 	if existsShort != "null" {
-		return apperrors.NewShortAlreadyExistsError(existsShort)
+		return errors.NewShortAlreadyExistsError(existsShort)
 	}
 
 	return nil

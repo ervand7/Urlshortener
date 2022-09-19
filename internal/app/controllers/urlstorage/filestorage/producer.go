@@ -1,4 +1,4 @@
-package filesaving
+package filestorage
 
 import (
 	"bufio"

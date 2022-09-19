@@ -11,6 +11,7 @@ func GzipMiddleware(next http.Handler) http.Handler {
 		if r.Header.Get("Content-Encoding") == "gzip" {
 			gzipWrappedBody, err := gzip.NewReader(r.Body)
 			if err != nil {
+				utils.Logger.Error(err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}

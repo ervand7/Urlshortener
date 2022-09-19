@@ -2,13 +2,14 @@ package views
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
+	u "github.com/ervand7/urlshortener/internal/app/controllers/urlstorage"
 	"github.com/ervand7/urlshortener/internal/app/database"
-	"github.com/ervand7/urlshortener/internal/app/models/url"
+	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
 	"github.com/ervand7/urlshortener/internal/app/utils"
-	q "github.com/ervand7/urlshortener/internal/app/utils/rawqueries"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -77,8 +78,8 @@ func TestUrlShorten(t *testing.T) {
 			)
 
 			server := Server{
-				MemoryStorage: &url.MemoryStorage{
-					HashTable: make(map[string]url.ShortenURLStruct, 0),
+				Storage: &u.MemoryStorage{
+					HashTable: make(map[string]u.ShortenURLStruct, 0),
 				},
 			}
 			router := mux.NewRouter()
@@ -148,11 +149,11 @@ func TestUrlGet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			server := Server{
-				MemoryStorage: &url.MemoryStorage{
-					HashTable: make(map[string]url.ShortenURLStruct, 0),
+				Storage: &u.MemoryStorage{
+					HashTable: make(map[string]u.ShortenURLStruct, 0),
 				},
 			}
-			server.MemoryStorage.Set("", tt.short, tt.want.origin)
+			_ = server.Storage.Set(context.TODO(), "", tt.short, tt.want.origin)
 
 			request := httptest.NewRequest(tt.method, tt.endpoint, nil)
 			router := mux.NewRouter()
@@ -245,8 +246,8 @@ func TestUrlShortenJSON(t *testing.T) {
 			)
 
 			server := Server{
-				MemoryStorage: &url.MemoryStorage{
-					HashTable: make(map[string]url.ShortenURLStruct, 0),
+				Storage: &u.MemoryStorage{
+					HashTable: make(map[string]u.ShortenURLStruct, 0),
 				},
 			}
 			router := mux.NewRouter()
@@ -320,8 +321,8 @@ func TestURLUserAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := Server{
-				MemoryStorage: &url.MemoryStorage{
-					HashTable: make(map[string]url.ShortenURLStruct, 0),
+				Storage: &u.MemoryStorage{
+					HashTable: make(map[string]u.ShortenURLStruct, 0),
 				},
 			}
 			requestPOST := httptest.NewRequest(
@@ -412,7 +413,6 @@ func TestURLShortenBatch(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		database.ManageDB()
 		t.Run(tt.name, func(t *testing.T) {
 			var reqBody = []byte(tt.body)
 			request := httptest.NewRequest(
@@ -421,13 +421,15 @@ func TestURLShortenBatch(t *testing.T) {
 				bytes.NewBuffer(reqBody),
 			)
 
+			db := database.Database{}
+			db.Run()
 			server := Server{
-				DBStorage: &url.DBStorage{
-					DB: database.DB,
+				Storage: &u.DBStorage{
+					DB: db,
 				},
 			}
 			defer func() {
-				_, err := server.DBStorage.DB.Conn.Exec(q.DropAll)
+				_, err := db.Conn.Exec(q.DropAll)
 				assert.NoError(t, err)
 			}()
 
@@ -500,7 +502,6 @@ func Test409(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		database.ManageDB()
 		t.Run(tt.name, func(t *testing.T) {
 			var body = []byte(tt.body)
 			request1 := httptest.NewRequest(
@@ -509,21 +510,24 @@ func Test409(t *testing.T) {
 				bytes.NewBuffer(body),
 			)
 
+			db := database.Database{}
+			db.Run()
 			server := Server{
-				DBStorage: &url.DBStorage{
-					DB: database.DB,
+				Storage: &u.DBStorage{
+					DB: db,
 				},
 			}
+			defer func() {
+				_, err := db.Conn.Exec(q.DropAll)
+				assert.NoError(t, err)
+			}()
+
 			var handler func(w http.ResponseWriter, r *http.Request)
 			if tt.handler == "URLShorten" {
 				handler = server.URLShorten
 			} else {
 				handler = server.URLShortenJSON
 			}
-			defer func() {
-				_, err := server.DBStorage.DB.Conn.Exec(q.DropAll)
-				assert.NoError(t, err)
-			}()
 
 			router1 := mux.NewRouter()
 			router1.HandleFunc(tt.endpoint,

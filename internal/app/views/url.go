@@ -3,9 +3,9 @@ package views
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/app/apperrors"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	g "github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
+	e "github.com/ervand7/urlshortener/internal/app/errors"
 	"github.com/ervand7/urlshortener/internal/app/utils"
 	"io"
 	"net/http"
@@ -29,10 +29,11 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 	short := g.ShortenURL()
 	httpStatus := http.StatusCreated
 	if err := server.SaveURL(userID, short, url, r); err != nil {
-		if errData, ok := err.(*apperrors.ShortAlreadyExistsError); ok {
+		if errData, ok := err.(*e.ShortAlreadyExistsError); ok {
 			short = errData.Error()
 			httpStatus = http.StatusConflict
 		} else {
+			utils.Logger.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -49,6 +50,7 @@ func (server *Server) URLGet(w http.ResponseWriter, r *http.Request) {
 	short := config.GetConfig().BaseURL + endpoint
 	origin, err := server.GetOriginByShort(short, r)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -83,6 +85,7 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 
 	reqBody := ReqBody{}
 	if err := json.Unmarshal(body, &reqBody); err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -91,10 +94,11 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 	short := g.ShortenURL()
 	httpStatus := http.StatusCreated
 	if err = server.SaveURL(userID, short, reqBody.URL, r); err != nil {
-		if errData, ok := err.(*apperrors.ShortAlreadyExistsError); ok {
+		if errData, ok := err.(*e.ShortAlreadyExistsError); ok {
 			short = errData.Error()
 			httpStatus = http.StatusConflict
 		} else {
+			utils.Logger.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -105,6 +109,7 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 	}
 	marshaledBody, err := json.Marshal(respBody)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -123,18 +128,21 @@ func (server *Server) URLUserAll(w http.ResponseWriter, r *http.Request) {
 	}
 	decodedUserID, err := hex.DecodeString(userID.Value)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	userURLs, err := server.GetUserURLs(string(decodedUserID), r)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	msg, err := json.Marshal(userURLs)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -174,6 +182,7 @@ func (server *Server) URLShortenBatch(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err := json.Unmarshal(body, &reqPairs); err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -189,11 +198,13 @@ func (server *Server) URLShortenBatch(w http.ResponseWriter, r *http.Request) {
 
 	marshaledBody, err := json.Marshal(respPairs)
 	if err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err = server.SaveURLs(dbEntries, r); err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

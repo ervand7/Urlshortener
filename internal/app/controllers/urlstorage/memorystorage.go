@@ -1,6 +1,11 @@
-package url
+package urlstorage
 
-import "sync"
+import (
+	"context"
+	"errors"
+	"github.com/ervand7/urlshortener/internal/app/utils"
+	"sync"
+)
 
 type MemoryStorage struct {
 	HashTable map[string]ShortenURLStruct
@@ -13,7 +18,9 @@ type ShortenURLStruct struct {
 	UserID string
 }
 
-func (m *MemoryStorage) Set(userID, short, origin string) {
+func (m *MemoryStorage) Set(
+	_ context.Context, userID, short, origin string,
+) error {
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
 	m.HashTable[short] = ShortenURLStruct{
@@ -21,16 +28,21 @@ func (m *MemoryStorage) Set(userID, short, origin string) {
 		Origin: origin,
 		UserID: userID,
 	}
+	return nil
 }
 
-func (m *MemoryStorage) Get(short string) (origin string) {
+func (m *MemoryStorage) Get(
+	_ context.Context, short string,
+) (origin string, err error) {
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
 	origin = m.HashTable[short].Origin
-	return origin
+	return origin, nil
 }
 
-func (m *MemoryStorage) GetUserURLs(userID string) (userURLs []map[string]string, err error) {
+func (m *MemoryStorage) GetUserURLs(
+	_ context.Context, userID string,
+) (userURLs []map[string]string, err error) {
 	userURLs = make([]map[string]string, 0)
 	for _, data := range m.HashTable {
 		if data.UserID == userID {
@@ -43,4 +55,10 @@ func (m *MemoryStorage) GetUserURLs(userID string) (userURLs []map[string]string
 	}
 
 	return userURLs, nil
+}
+
+func (m *MemoryStorage) SetMany(_ context.Context, _ []utils.DBEntry) error {
+	err := errors.New("not implemented")
+	utils.Logger.Error(err.Error())
+	return err
 }

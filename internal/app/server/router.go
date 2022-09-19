@@ -1,8 +1,6 @@
 package server
 
 import (
-	"github.com/ervand7/urlshortener/internal/app/database"
-	"github.com/ervand7/urlshortener/internal/app/models/url"
 	"github.com/ervand7/urlshortener/internal/app/views"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -17,13 +15,7 @@ func newRouter() chi.Router {
 	r.Use(GzipMiddleware)
 
 	server := views.Server{
-		MemoryStorage: &url.MemoryStorage{
-			HashTable: make(map[string]url.ShortenURLStruct, 0),
-		},
-		FileStorage: &url.FileStorage{},
-		DBStorage: &url.DBStorage{
-			DB: database.DB,
-		},
+		Storage: GetServerStorage(),
 	}
 
 	r.Route("/", func(r chi.Router) {

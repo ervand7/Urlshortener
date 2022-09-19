@@ -3,9 +3,7 @@ package views
 import (
 	"context"
 	"encoding/hex"
-	"errors"
-	"github.com/ervand7/urlshortener/internal/app/config"
-	"github.com/ervand7/urlshortener/internal/app/models/url"
+	"github.com/ervand7/urlshortener/internal/app/models"
 	"github.com/ervand7/urlshortener/internal/app/utils"
 	"github.com/google/uuid"
 	"net/http"
@@ -13,9 +11,7 @@ import (
 )
 
 type Server struct {
-	MemoryStorage *url.MemoryStorage
-	FileStorage   *url.FileStorage
-	DBStorage     *url.DBStorage
+	Storage models.Storage
 }
 
 func (server Server) GetOrCreateUserIDFromCookie(
@@ -59,75 +55,41 @@ func (server Server) CloseBody(r *http.Request) {
 }
 
 func (server Server) SaveURL(userID, shorten, origin string, r *http.Request) error {
-	if config.GetConfig().DatabaseDSN != "" {
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		defer cancel()
-		if err := server.DBStorage.Set(ctx, userID, shorten, origin); err != nil {
-			return err
-		}
-		return nil
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	if err := server.Storage.Set(ctx, userID, shorten, origin); err != nil {
+		return err
 	}
-	if config.GetConfig().FileStoragePath != "" {
-		if err := server.FileStorage.Set(shorten, origin); err != nil {
-			return err
-		}
-		return nil
-	}
-	server.MemoryStorage.Set(userID, shorten, origin)
 	return nil
 }
 
 func (server Server) SaveURLs(dbEntries []utils.DBEntry, r *http.Request) error {
-	if config.GetConfig().DatabaseDSN != "" {
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		defer cancel()
-		if err := server.DBStorage.SetMany(ctx, dbEntries); err != nil {
-			return err
-		}
-		return nil
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	if err := server.Storage.SetMany(ctx, dbEntries); err != nil {
+		return err
 	}
-	return errors.New("SaveURLs was called when DATABASE_DSN env was not set")
+	return nil
 }
 
 func (server Server) GetOriginByShort(
 	short string, r *http.Request,
 ) (origin string, err error) {
-
-	if config.GetConfig().DatabaseDSN != "" {
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		defer cancel()
-		origin, err = server.DBStorage.Get(ctx, short)
-		if err != nil {
-			return "", err
-		}
-		return origin, nil
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	origin, err = server.Storage.Get(ctx, short)
+	if err != nil {
+		return "", err
 	}
-	if config.GetConfig().FileStoragePath != "" {
-		origin, err = server.FileStorage.Get(short)
-		if err != nil {
-			return "", nil
-		}
-		return origin, nil
-	}
-	origin = server.MemoryStorage.Get(short)
 	return origin, nil
 }
 
 func (server Server) GetUserURLs(
 	userID string, r *http.Request,
 ) (userURLs []map[string]string, err error) {
-
-	if config.GetConfig().DatabaseDSN != "" {
-		ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-		defer cancel()
-		userURLs, err = server.DBStorage.GetUserURLs(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-		return userURLs, nil
-	}
-
-	userURLs, err = server.MemoryStorage.GetUserURLs(userID)
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	userURLs, err = server.Storage.GetUserURLs(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
