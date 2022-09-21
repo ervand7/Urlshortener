@@ -1,9 +1,11 @@
 package views
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
-	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
+	g "github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
+	e "github.com/ervand7/urlshortener/internal/app/errors"
 	"github.com/ervand7/urlshortener/internal/app/utils"
 	"io"
 	"net/http"
@@ -11,13 +13,7 @@ import (
 
 // URLShorten POST ("/")
 func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		err := r.Body.Close()
-		if err != nil {
-			utils.Logger.Warn(err.Error())
-		}
-	}()
-
+	defer server.CloseBody(r)
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -28,59 +24,46 @@ func (server *Server) URLShorten(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "param url not filled", http.StatusBadRequest)
 		return
 	}
-	w.Header().Add("Content-type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
 
-	shortenedURL := generatedata.ShortenURL()
-	switch config.GetConfig().FileStoragePath {
-	case "":
-		server.MemoryStorage.Set(shortenedURL, url)
-	default:
-		if err := server.FileStorage.Set(shortenedURL, url); err != nil {
+	userID := server.GetOrCreateUserIDFromCookie(w, r)
+	short := g.ShortenURL()
+	httpStatus := http.StatusCreated
+	if err := server.SaveURL(userID, short, url, r); err != nil {
+		if errData, ok := err.(*e.ShortAlreadyExistsError); ok {
+			short = errData.Error()
+			httpStatus = http.StatusConflict
+		} else {
+			utils.Logger.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
-	_, writeErr := w.Write([]byte(shortenedURL))
-	if writeErr != nil {
-		utils.Logger.Warn(writeErr.Error())
-	}
+
+	w.Header().Add("Content-type", "text/plain; charset=utf-8")
+	w.WriteHeader(httpStatus)
+	server.Write([]byte(short), w)
 }
 
 // URLGet GET ("/{id}")
 func (server *Server) URLGet(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.URL.Path
-	shortenedURL := config.GetConfig().BaseURL + endpoint
-	var originURL string
-
-	switch config.GetConfig().FileStoragePath {
-	case "":
-		originURL = server.MemoryStorage.Get(shortenedURL)
-	default:
-		result, err := server.FileStorage.Get(shortenedURL)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		originURL = result
+	short := config.GetConfig().BaseURL + endpoint
+	origin, err := server.GetOriginByShort(short, r)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
-
-	if originURL == "" {
+	if origin == "" {
 		http.Error(w, "not exists", http.StatusBadRequest)
 		return
 	}
-	http.Redirect(w, r, originURL, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, origin, http.StatusTemporaryRedirect)
 }
 
 // URLShortenJSON POST ("/api/shorten")
 func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		err := r.Body.Close()
-		if err != nil {
-			utils.Logger.Warn(err.Error())
-		}
-	}()
-
+	defer server.CloseBody(r)
 	type (
 		ReqBody struct {
 			URL string `json:"url"`
@@ -102,34 +85,131 @@ func (server *Server) URLShortenJSON(w http.ResponseWriter, r *http.Request) {
 
 	reqBody := ReqBody{}
 	if err := json.Unmarshal(body, &reqBody); err != nil {
+		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	shortenedURL := generatedata.ShortenURL()
-	respBody := RespBody{
-		Result: shortenedURL,
-	}
-	marshaledBody, err := json.Marshal(respBody)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Header().Add("Content-type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-
-	switch config.GetConfig().FileStoragePath {
-	case "":
-		server.MemoryStorage.Set(shortenedURL, reqBody.URL)
-	default:
-		if err := server.FileStorage.Set(shortenedURL, reqBody.URL); err != nil {
+	userID := server.GetOrCreateUserIDFromCookie(w, r)
+	short := g.ShortenURL()
+	httpStatus := http.StatusCreated
+	if err = server.SaveURL(userID, short, reqBody.URL, r); err != nil {
+		if errData, ok := err.(*e.ShortAlreadyExistsError); ok {
+			short = errData.Error()
+			httpStatus = http.StatusConflict
+		} else {
+			utils.Logger.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	_, writeErr := w.Write(marshaledBody)
-	if writeErr != nil {
-		utils.Logger.Warn(writeErr.Error())
+	respBody := RespBody{
+		Result: short,
 	}
+	marshaledBody, err := json.Marshal(respBody)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-type", "application/json")
+	w.WriteHeader(httpStatus)
+	server.Write(marshaledBody, w)
+}
+
+// URLUserAll GET ("/api/user/urls")
+func (server *Server) URLUserAll(w http.ResponseWriter, r *http.Request) {
+	userID, err := r.Cookie("userID")
+	if err != nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	decodedUserID, err := hex.DecodeString(userID.Value)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userURLs, err := server.GetUserURLs(string(decodedUserID), r)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	msg, err := json.Marshal(userURLs)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	server.Write(msg, w)
+}
+
+// URLShortenBatch POST ("/api/shorten/batch")
+func (server *Server) URLShortenBatch(w http.ResponseWriter, r *http.Request) {
+	defer server.CloseBody(r)
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if len(body) == 0 {
+		http.Error(w, "body is empty", http.StatusBadRequest)
+		return
+	}
+
+	type (
+		ReqPair struct {
+			CorrelationID string `json:"correlation_id"`
+			OriginURL     string `json:"original_url"`
+		}
+		RespPair struct {
+			CorrelationID string `json:"correlation_id"`
+			ShortURL      string `json:"short_url"`
+		}
+	)
+	var (
+		reqPairs  []ReqPair
+		respPairs []RespPair
+		dbEntries []utils.DBEntry
+	)
+
+	if err := json.Unmarshal(body, &reqPairs); err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	userID := server.GetOrCreateUserIDFromCookie(w, r)
+	for _, val := range reqPairs {
+		short := g.ShortenURL()
+		respPair := RespPair{CorrelationID: val.CorrelationID, ShortURL: short}
+		respPairs = append(respPairs, respPair)
+
+		entry := utils.DBEntry{UserID: userID, Short: short, Origin: val.OriginURL}
+		dbEntries = append(dbEntries, entry)
+	}
+
+	marshaledBody, err := json.Marshal(respPairs)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err = server.SaveURLs(dbEntries, r); err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Add("Content-type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	server.Write(marshaledBody, w)
 }

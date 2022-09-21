@@ -35,7 +35,9 @@ func New(level string) (*zap.Logger, error) {
 
 	// set output
 	cfg.OutputPaths = []string{"stdout"}
+	cfg.DisableStacktrace = true
 
+	// set log time mapping
 	cfg.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(t.Format(time.StampNano))
 	}

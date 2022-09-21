@@ -1,4 +1,4 @@
-package filetable
+package filestorage
 
 import (
 	"bufio"
