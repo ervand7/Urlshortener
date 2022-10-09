@@ -27,10 +27,28 @@ Content-Type: application/json
 ]
 
 ###
-GET http://localhost:8080/BVIrt
+GET http://localhost:8080/UPfTE
 
 ###
 GET http://localhost:8080/api/user/urls
 
 ###
 GET http://localhost:8080/ping
+
+###
+DELETE http://localhost:8080/api/user/urls
+Content-Type: application/json
+
+[
+  "JAwJg",
+  "gucuZ",
+  "HLequ",
+  "LaGeD",
+  "PWPpe",
+  "YumgX",
+  "eZmrJ",
+  "jQifa",
+  "QJxfm",
+  "PkKmO",
+  "UPfTE"
+]

@@ -16,7 +16,9 @@ const (
 		  and not exists(select 1 from cte);
 `
 
-	Get string = `select "origin" from url where "short" = $1;`
+	Get string = `select "origin", "active" from url where "short" = $1;`
 
 	GetUserURLs string = `select "short", "origin" from url where "user_id" = $1;`
+
+	DeleteURL string = `update url set "active" = false  where "short" = ANY($1)`
 )

@@ -60,7 +60,7 @@ func (f *FileStorage) Get(
 	return origin, nil
 }
 
-func (f *FileStorage) SetMany(_ context.Context, _ []utils.DBEntry) error {
+func (f *FileStorage) SetMany(_ context.Context, _ []utils.Entry) error {
 	err := errors.New("not implemented")
 	utils.Logger.Error(err.Error())
 	return err
@@ -72,4 +72,9 @@ func (f *FileStorage) GetUserURLs(
 	err = errors.New("not implemented")
 	utils.Logger.Error(err.Error())
 	return nil, err
+}
+
+func (f *FileStorage) DeleteUserURLs(_ []string) {
+	err := errors.New("not implemented")
+	utils.Logger.Error(err.Error())
 }

@@ -3,13 +3,14 @@ package views
 import (
 	"bytes"
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
-	u "github.com/ervand7/urlshortener/internal/app/controllers/urlstorage"
+	s "github.com/ervand7/urlshortener/internal/app/controllers/storage"
 	"github.com/ervand7/urlshortener/internal/app/database"
 	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
-	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,9 +19,10 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 )
 
-func TestUrlShorten(t *testing.T) {
+func TestShortenURL(t *testing.T) {
 	lenRespBody := len(config.GetConfig().BaseURL) +
 		len("/") +
 		generatedata.ShortenEndpointLen
@@ -78,12 +80,20 @@ func TestUrlShorten(t *testing.T) {
 			)
 
 			server := Server{
-				Storage: &u.MemoryStorage{
-					HashTable: make(map[string]u.ShortenURLStruct, 0),
-				},
+				Storage: s.GetStorage(),
 			}
+			defer func() {
+				switch server.Storage.(type) {
+				case *s.DBStorage:
+					db := database.Database{}
+					db.Run()
+					_, err := db.Conn.Exec(q.DropAll)
+					assert.NoError(t, err)
+				}
+			}()
+
 			router := mux.NewRouter()
-			router.HandleFunc("/", server.URLShorten).Methods("POST")
+			router.HandleFunc("/", server.ShortenURL).Methods("POST")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
@@ -100,7 +110,102 @@ func TestUrlShorten(t *testing.T) {
 	}
 }
 
-func TestUrlGet(t *testing.T) {
+func TestShortenURL409(t *testing.T) {
+	if os.Getenv("DATABASE_DSN") != "user=ervand password=ervand dbname=urlshortener_test host=localhost port=5432 sslmode=disable" {
+		return
+	}
+
+	type want struct {
+		contentType string
+	}
+	tests := []struct {
+		name     string
+		handler  string
+		endpoint string
+		body     string
+		method   string
+		want     want
+	}{
+		{
+			name:     "success 409 ShortenURL",
+			handler:  "ShortenURL",
+			endpoint: "/",
+			body:     "https://practicum.yandex.ru/learn/go-advanced/courses/14d6ff29-c8b6-43bf-9c55-12e8fe25b1b0/sprints/39172/topics/add19e4a-79bf-416e-9d13-0df2005ec81e/lessons/4280c1ec-45c9-4b73-bdf1-8ea438b18212/",
+			method:   http.MethodPost,
+			want: want{
+				contentType: "text/plain; charset=utf-8",
+			},
+		},
+		{
+			name:     "success 409 APIShortenURL",
+			handler:  "APIShortenURL",
+			endpoint: "/api/shorten",
+			body:     `{"url":"https://practicum.yandex.ru/learn/go-advanced/courses/14d6ff29-c8b6-43bf-9c55-12e8fe25b1b0/sprints/39172/topics/add19e4a-79bf-416e-9d13-0df2005ec81e/lessons/4280c1ec-45c9-4b73-bdf1-8ea438b18212/"}`,
+			method:   http.MethodPost,
+			want: want{
+				contentType: "application/json",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var body = []byte(tt.body)
+			request1 := httptest.NewRequest(
+				tt.method,
+				tt.endpoint,
+				bytes.NewBuffer(body),
+			)
+
+			db := database.Database{}
+			db.Run()
+			server := Server{
+				Storage: s.NewDBStorage(db),
+			}
+			defer func() {
+				_, err := db.Conn.Exec(q.DropAll)
+				assert.NoError(t, err)
+			}()
+
+			var handler func(w http.ResponseWriter, r *http.Request)
+			if tt.handler == "ShortenURL" {
+				handler = server.ShortenURL
+			} else {
+				handler = server.APIShortenURL
+			}
+
+			router1 := mux.NewRouter()
+			router1.HandleFunc(tt.endpoint,
+				handler).Methods("POST")
+			writer1 := httptest.NewRecorder()
+			router1.ServeHTTP(writer1, request1)
+
+			response1 := writer1.Result()
+			assert.Equal(t, response1.StatusCode, http.StatusCreated)
+
+			request2 := httptest.NewRequest(
+				tt.method,
+				tt.endpoint,
+				bytes.NewBuffer(body),
+			)
+			router2 := mux.NewRouter()
+			router2.HandleFunc(tt.endpoint,
+				handler).Methods("POST")
+			writer2 := httptest.NewRecorder()
+			router2.ServeHTTP(writer2, request2)
+
+			response2 := writer2.Result()
+			assert.Equal(t, response2.StatusCode, http.StatusConflict)
+			assert.Equal(t, tt.want.contentType, response2.Header.Get("Content-Type"))
+
+			err := response1.Body.Close()
+			require.NoError(t, err)
+			err = response2.Body.Close()
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestGetURL(t *testing.T) {
 	short := generatedata.ShortenURL()
 
 	type want struct {
@@ -149,29 +254,75 @@ func TestUrlGet(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			server := Server{
-				Storage: &u.MemoryStorage{
-					HashTable: make(map[string]u.ShortenURLStruct, 0),
-				},
+				Storage: s.GetStorage(),
 			}
-			_ = server.Storage.Set(context.TODO(), "", tt.short, tt.want.origin)
+			defer func() {
+				switch server.Storage.(type) {
+				case *s.DBStorage:
+					db := database.Database{}
+					db.Run()
+					_, err := db.Conn.Exec(q.DropAll)
+					assert.NoError(t, err)
+				}
+			}()
+
+			ctx := context.Background()
+			err := server.Storage.Set(ctx, uuid.New().String(), tt.short, tt.want.origin)
+			assert.NoError(t, err)
 
 			request := httptest.NewRequest(tt.method, tt.endpoint, nil)
 			router := mux.NewRouter()
-			router.HandleFunc("/{id:[a-zA-Z]+}", server.URLGet).Methods("GET")
+			router.HandleFunc("/{id:[a-zA-Z]+}", server.GetURL).Methods("GET")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
 			response := writer.Result()
-			if err := response.Body.Close(); err != nil {
-				utils.Logger.Warn(err.Error())
-			}
+			err = response.Body.Close()
+			assert.NoError(t, err)
+
 			assert.Equal(t, tt.want.statusCode, response.StatusCode)
 			assert.Equal(t, tt.want.origin, response.Header.Get("Location"))
 		})
 	}
 }
 
-func TestUrlShortenJSON(t *testing.T) {
+func TestGetURL410(t *testing.T) {
+	if os.Getenv("DATABASE_DSN") != "user=ervand password=ervand dbname=urlshortener_test host=localhost port=5432 sslmode=disable" {
+		return
+	}
+
+	db := database.Database{}
+	db.Run()
+	server := Server{
+		Storage: s.NewDBStorage(db),
+	}
+	defer func() {
+		_, err := db.Conn.Exec(q.DropAll)
+		assert.NoError(t, err)
+	}()
+
+	userID := uuid.New().String()
+	short := generatedata.ShortenURL()
+	origin := "world"
+	_, err := db.Conn.Exec(
+		`insert into url ("user_id", "short", "origin", "active") values ($1, $2, $3, $4)`,
+		userID, short, origin, false,
+	)
+	assert.NoError(t, err)
+
+	request := httptest.NewRequest(http.MethodGet, short, nil)
+	router := mux.NewRouter()
+	router.HandleFunc("/{id:[a-zA-Z]+}", server.GetURL).Methods("GET")
+	writer := httptest.NewRecorder()
+	router.ServeHTTP(writer, request)
+
+	response := writer.Result()
+	err = response.Body.Close()
+	assert.NoError(t, err)
+	assert.Equal(t, response.StatusCode, http.StatusGone)
+}
+
+func TestAPIShortenURL(t *testing.T) {
 	lenResultURL := len(config.GetConfig().BaseURL) +
 		len("/") +
 		generatedata.ShortenEndpointLen
@@ -246,12 +397,20 @@ func TestUrlShortenJSON(t *testing.T) {
 			)
 
 			server := Server{
-				Storage: &u.MemoryStorage{
-					HashTable: make(map[string]u.ShortenURLStruct, 0),
-				},
+				Storage: s.GetStorage(),
 			}
+			defer func() {
+				switch server.Storage.(type) {
+				case *s.DBStorage:
+					db := database.Database{}
+					db.Run()
+					_, err := db.Conn.Exec(q.DropAll)
+					assert.NoError(t, err)
+				}
+			}()
+
 			router := mux.NewRouter()
-			router.HandleFunc("/api/shorten", server.URLShortenJSON).Methods("POST")
+			router.HandleFunc("/api/shorten", server.APIShortenURL).Methods("POST")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
@@ -276,7 +435,7 @@ func TestUrlShortenJSON(t *testing.T) {
 	}
 }
 
-func TestURLUserAll(t *testing.T) {
+func TestUserURLs(t *testing.T) {
 	type want struct {
 		statusCode int
 		bodyChunk  string
@@ -321,17 +480,25 @@ func TestURLUserAll(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			server := Server{
-				Storage: &u.MemoryStorage{
-					HashTable: make(map[string]u.ShortenURLStruct, 0),
-				},
+				Storage: s.GetStorage(),
 			}
+			defer func() {
+				switch server.Storage.(type) {
+				case *s.DBStorage:
+					db := database.Database{}
+					db.Run()
+					_, err := db.Conn.Exec(q.DropAll)
+					assert.NoError(t, err)
+				}
+			}()
+
 			requestPOST := httptest.NewRequest(
 				http.MethodPost,
 				"/api/shorten",
 				bytes.NewBuffer([]byte(`{"url":"https://hello.world/"}`)),
 			)
 			router1 := mux.NewRouter()
-			router1.HandleFunc("/api/shorten", server.URLShortenJSON).Methods("POST")
+			router1.HandleFunc("/api/shorten", server.APIShortenURL).Methods("POST")
 			writer1 := httptest.NewRecorder()
 			router1.ServeHTTP(writer1, requestPOST)
 
@@ -349,7 +516,7 @@ func TestURLUserAll(t *testing.T) {
 			}
 			router2 := mux.NewRouter()
 			writer2 := httptest.NewRecorder()
-			router2.HandleFunc("/api/user/urls", server.URLUserAll).Methods("GET")
+			router2.HandleFunc("/api/user/urls", server.UserURLs).Methods("GET")
 			router2.ServeHTTP(writer2, requestGET)
 
 			responseGET := writer2.Result()
@@ -367,7 +534,7 @@ func TestURLUserAll(t *testing.T) {
 	}
 }
 
-func TestURLShortenBatch(t *testing.T) {
+func TestAPIShortenBatch(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != "user=ervand password=ervand dbname=urlshortener_test host=localhost port=5432 sslmode=disable" {
 		return
 	}
@@ -424,9 +591,7 @@ func TestURLShortenBatch(t *testing.T) {
 			db := database.Database{}
 			db.Run()
 			server := Server{
-				Storage: &u.DBStorage{
-					DB: db,
-				},
+				Storage: s.NewDBStorage(db),
 			}
 			defer func() {
 				_, err := db.Conn.Exec(q.DropAll)
@@ -435,7 +600,7 @@ func TestURLShortenBatch(t *testing.T) {
 
 			router := mux.NewRouter()
 			router.HandleFunc("/api/shorten/batch",
-				server.URLShortenBatch).Methods("POST")
+				server.APIShortenBatch).Methods("POST")
 			writer := httptest.NewRecorder()
 			router.ServeHTTP(writer, request)
 
@@ -464,99 +629,74 @@ func TestURLShortenBatch(t *testing.T) {
 	}
 }
 
-func Test409(t *testing.T) {
+func TestUserURLsDelete(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != "user=ervand password=ervand dbname=urlshortener_test host=localhost port=5432 sslmode=disable" {
 		return
 	}
 
-	type want struct {
-		contentType string
+	db := database.Database{}
+	db.Run()
+	server := Server{
+		Storage: s.NewDBStorage(db),
 	}
-	tests := []struct {
-		name     string
-		handler  string
-		endpoint string
-		body     string
-		method   string
-		want     want
-	}{
-		{
-			name:     "success 409 URLShorten",
-			handler:  "URLShorten",
-			endpoint: "/",
-			body:     "https://practicum.yandex.ru/learn/go-advanced/courses/14d6ff29-c8b6-43bf-9c55-12e8fe25b1b0/sprints/39172/topics/add19e4a-79bf-416e-9d13-0df2005ec81e/lessons/4280c1ec-45c9-4b73-bdf1-8ea438b18212/",
-			method:   http.MethodPost,
-			want: want{
-				contentType: "text/plain; charset=utf-8",
-			},
-		},
-		{
-			name:     "success 409 URLShortenJSON",
-			handler:  "URLShortenJSON",
-			endpoint: "/api/shorten",
-			body:     `{"url":"https://practicum.yandex.ru/learn/go-advanced/courses/14d6ff29-c8b6-43bf-9c55-12e8fe25b1b0/sprints/39172/topics/add19e4a-79bf-416e-9d13-0df2005ec81e/lessons/4280c1ec-45c9-4b73-bdf1-8ea438b18212/"}`,
-			method:   http.MethodPost,
-			want: want{
-				contentType: "application/json",
-			},
-		},
+	defer func() {
+		_, err := db.Conn.Exec(q.DropAll)
+		assert.NoError(t, err)
+	}()
+
+	shorts := []string{
+		"hello1",
+		"hello2",
+		"hello3",
+		"hello4",
+		"hello5",
+		"hello6",
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var body = []byte(tt.body)
-			request1 := httptest.NewRequest(
-				tt.method,
-				tt.endpoint,
-				bytes.NewBuffer(body),
-			)
+	origins := []string{
+		"world1",
+		"world2",
+		"world3",
+		"world4",
+		"world5",
+		"world6",
+	}
+	userID := uuid.New().String()
+	for idx := range shorts {
+		_, err := db.Conn.Exec(
+			`insert into url ("user_id", "short", "origin") values ($1, $2, $3)`,
+			userID, shorts[idx], origins[idx],
+		)
+		assert.NoError(t, err)
+	}
 
-			db := database.Database{}
-			db.Run()
-			server := Server{
-				Storage: &u.DBStorage{
-					DB: db,
-				},
-			}
-			defer func() {
-				_, err := db.Conn.Exec(q.DropAll)
-				assert.NoError(t, err)
-			}()
+	cookie := &http.Cookie{Name: "userID", Value: hex.EncodeToString([]byte(userID))}
+	marshaled, err := json.Marshal(shorts)
+	assert.NoError(t, err)
 
-			var handler func(w http.ResponseWriter, r *http.Request)
-			if tt.handler == "URLShorten" {
-				handler = server.URLShorten
-			} else {
-				handler = server.URLShortenJSON
-			}
+	request := httptest.NewRequest(http.MethodDelete, "/api/user/urls", bytes.NewBuffer(marshaled))
+	request.AddCookie(cookie)
+	router := mux.NewRouter()
+	router.HandleFunc("/api/user/urls", server.UserURLsDelete).Methods("DELETE")
+	writer := httptest.NewRecorder()
+	router.ServeHTTP(writer, request)
 
-			router1 := mux.NewRouter()
-			router1.HandleFunc(tt.endpoint,
-				handler).Methods("POST")
-			writer1 := httptest.NewRecorder()
-			router1.ServeHTTP(writer1, request1)
+	response := writer.Result()
+	assert.Equal(t, response.StatusCode, http.StatusAccepted)
+	err = response.Body.Close()
+	assert.NoError(t, err)
+	time.Sleep(s.Timeout * time.Second)
 
-			response1 := writer1.Result()
-			assert.Equal(t, response1.StatusCode, http.StatusCreated)
+	for _, short := range shorts {
+		ctx := context.TODO()
+		rows := db.Conn.QueryRowContext(
+			ctx, `select "active" from url where "short" = $1;`, short,
+		)
+		var active bool
 
-			request2 := httptest.NewRequest(
-				tt.method,
-				tt.endpoint,
-				bytes.NewBuffer(body),
-			)
-			router2 := mux.NewRouter()
-			router2.HandleFunc(tt.endpoint,
-				handler).Methods("POST")
-			writer2 := httptest.NewRecorder()
-			router2.ServeHTTP(writer2, request2)
-
-			response2 := writer2.Result()
-			assert.Equal(t, response2.StatusCode, http.StatusConflict)
-			assert.Equal(t, tt.want.contentType, response2.Header.Get("Content-Type"))
-
-			err := response1.Body.Close()
-			require.NoError(t, err)
-			err = response2.Body.Close()
-			require.NoError(t, err)
-		})
+		err = rows.Scan(&active)
+		assert.NoError(t, err)
+		assert.Equal(t, false, active)
+		err = rows.Err()
+		assert.NoError(t, err)
 	}
 }

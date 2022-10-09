@@ -1,7 +1,6 @@
 package views
 
 import (
-	"context"
 	"encoding/hex"
 	"github.com/ervand7/urlshortener/internal/app/models"
 	"github.com/ervand7/urlshortener/internal/app/utils"
@@ -9,6 +8,8 @@ import (
 	"net/http"
 	"time"
 )
+
+const ctxTime time.Duration = 2
 
 type Server struct {
 	Storage models.Storage
@@ -52,46 +53,4 @@ func (server Server) CloseBody(r *http.Request) {
 	if err != nil {
 		utils.Logger.Warn(err.Error())
 	}
-}
-
-func (server Server) SaveURL(userID, shorten, origin string, r *http.Request) error {
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-	if err := server.Storage.Set(ctx, userID, shorten, origin); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (server Server) SaveURLs(dbEntries []utils.DBEntry, r *http.Request) error {
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-	if err := server.Storage.SetMany(ctx, dbEntries); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (server Server) GetOriginByShort(
-	short string, r *http.Request,
-) (origin string, err error) {
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-	origin, err = server.Storage.Get(ctx, short)
-	if err != nil {
-		return "", err
-	}
-	return origin, nil
-}
-
-func (server Server) GetUserURLs(
-	userID string, r *http.Request,
-) (userURLs []map[string]string, err error) {
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-	userURLs, err = server.Storage.GetUserURLs(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	return userURLs, nil
 }
