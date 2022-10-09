@@ -25,6 +25,7 @@ func newRouter() chi.Router {
 		r.Get("/{id:[a-zA-Z]+}", server.URLGet)
 		r.Get("/api/user/urls", server.URLUserAll)
 		r.Get("/ping", server.DBPing)
+		r.Delete("/api/user/urls", server.URLDeleteMany)
 	})
 
 	return r

@@ -95,3 +95,7 @@ func (server Server) GetUserURLs(
 	}
 	return userURLs, nil
 }
+
+func (server Server) DeleteURLs(urlsFromRequest []string) {
+	server.Storage.DeleteURLs(urlsFromRequest)
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/app/config"
+	"github.com/ervand7/urlshortener/internal/app/controllers/algorithms"
 	g "github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	e "github.com/ervand7/urlshortener/internal/app/errors"
 	"github.com/ervand7/urlshortener/internal/app/utils"
@@ -50,6 +51,10 @@ func (server *Server) URLGet(w http.ResponseWriter, r *http.Request) {
 	short := config.GetConfig().BaseURL + endpoint
 	origin, err := server.GetOriginByShort(short, r)
 	if err != nil {
+		if _, ok := err.(*e.URLNotActiveError); ok {
+			http.Error(w, err.Error(), http.StatusGone)
+			return
+		}
 		utils.Logger.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -212,4 +217,43 @@ func (server *Server) URLShortenBatch(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Content-type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	server.Write(marshaledBody, w)
+}
+
+// URLDeleteMany delete ("/api/user/urls")
+func (server *Server) URLDeleteMany(w http.ResponseWriter, r *http.Request) {
+	defer server.CloseBody(r)
+
+	userID, err := r.Cookie("userID")
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	decodedUserID, err := hex.DecodeString(userID.Value)
+	if err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var urlsFromRequest []string
+	if err = json.NewDecoder(r.Body).Decode(&urlsFromRequest); err != nil {
+		utils.Logger.Error(err.Error())
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	userURLs, err := server.GetUserURLs(string(decodedUserID), r)
+	var userUrlsFromDB []string
+	for _, val := range userURLs {
+		userUrlsFromDB = append(userUrlsFromDB, val["short_url"])
+	}
+	if !algorithms.IsIntersection(userUrlsFromDB, urlsFromRequest) {
+		utils.Logger.Warn("user can delete only his own urls")
+	}
+
+	go func() {
+		server.DeleteURLs(urlsFromRequest)
+	}()
+	w.WriteHeader(http.StatusAccepted)
 }

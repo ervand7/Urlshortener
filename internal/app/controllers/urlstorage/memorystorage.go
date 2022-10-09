@@ -62,3 +62,8 @@ func (m *MemoryStorage) SetMany(_ context.Context, _ []utils.DBEntry) error {
 	utils.Logger.Error(err.Error())
 	return err
 }
+
+func (m *MemoryStorage) DeleteURLs(_ []string) {
+	err := errors.New("not implemented")
+	utils.Logger.Error(err.Error())
+}

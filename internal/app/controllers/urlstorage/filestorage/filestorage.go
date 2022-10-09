@@ -73,3 +73,8 @@ func (f *FileStorage) GetUserURLs(
 	utils.Logger.Error(err.Error())
 	return nil, err
 }
+
+func (f *FileStorage) DeleteURLs(_ []string) {
+	err := errors.New("not implemented")
+	utils.Logger.Error(err.Error())
+}

@@ -12,9 +12,7 @@ func GetServerStorage() (storage models.Storage) {
 	if config.GetConfig().DatabaseDSN != "" {
 		db := database.Database{}
 		db.Run()
-		storage = &u.DBStorage{
-			DB: db,
-		}
+		storage = u.NewDBStorage(db)
 		return storage
 	}
 	if config.GetConfig().FileStoragePath != "" {

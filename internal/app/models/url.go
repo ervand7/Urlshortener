@@ -10,4 +10,5 @@ type Storage interface {
 	SetMany(ctx context.Context, dbEntries []utils.DBEntry) error
 	Get(ctx context.Context, short string) (origin string, err error)
 	GetUserURLs(ctx context.Context, userID string) (result []map[string]string, err error)
+	DeleteURLs(shortUrls []string)
 }

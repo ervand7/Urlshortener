@@ -36,6 +36,7 @@ func TestDBStorage_Set(t *testing.T) {
 		userID string
 		short  string
 		origin string
+		active bool
 	}
 	rows, err := db.Conn.Query("select * from url")
 	assert.NoError(t, err)
@@ -46,7 +47,7 @@ func TestDBStorage_Set(t *testing.T) {
 
 	var entry Entry
 	for rows.Next() {
-		err = rows.Scan(&entry.id, &entry.userID, &entry.short, &entry.origin)
+		err = rows.Scan(&entry.id, &entry.userID, &entry.short, &entry.origin, &entry.active)
 		assert.NoError(t, err)
 	}
 
