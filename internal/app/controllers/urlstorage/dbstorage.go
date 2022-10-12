@@ -93,18 +93,12 @@ func (d *DBStorage) SetMany(ctx context.Context, dbEntries []utils.DBEntry) erro
 }
 
 func (d *DBStorage) Get(ctx context.Context, short string) (origin string, err error) {
-	rows, err := d.DB.Conn.QueryContext(ctx, q.Get, short)
+	rows := d.DB.Conn.QueryRowContext(ctx, q.Get, short)
 	var active bool
+
+	err = rows.Scan(&origin, &active)
 	if err != nil {
 		return "", err
-	}
-	defer d.DB.CloseRows(rows)
-
-	for rows.Next() {
-		err = rows.Scan(&origin, &active)
-		if err != nil {
-			return "", err
-		}
 	}
 	if !active {
 		return "", _errors.NewURLNotActiveError(short)
