@@ -190,7 +190,7 @@ func (d *DBStorage) flush(ctx context.Context) {
 }
 
 func (d *DBStorage) deleteBatch(ctx context.Context, shortUrls []string) error {
-	arr := &pgtype.VarcharArray{}
+	arr := &pgtype.TextArray{}
 	if err := arr.Set(shortUrls); err != nil {
 		return fmt.Errorf("prepare argument: %w", err)
 	}
