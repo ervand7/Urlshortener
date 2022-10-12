@@ -9,6 +9,7 @@ import (
 	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
 	_errors "github.com/ervand7/urlshortener/internal/app/errors"
 	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/jackc/pgtype"
 )
 
 const (
@@ -189,7 +190,11 @@ func (d *DBStorage) flush(ctx context.Context) {
 }
 
 func (d *DBStorage) deleteBatch(ctx context.Context, shortUrls []string) error {
-	res, err := d.DB.Conn.ExecContext(ctx, "UPDATE url SET active = false WHERE shorts IN $1", shortUrls)
+	arr := &pgtype.VarcharArray{}
+	if err := arr.Set(shortUrls); err != nil {
+		return fmt.Errorf("prepare argument: %w", err)
+	}
+	res, err := d.DB.Conn.ExecContext(ctx, "UPDATE url SET active = false WHERE shorts ANY ($1)", arr)
 	if err != nil {
 		return fmt.Errorf("mass update: %w", err)
 	}
