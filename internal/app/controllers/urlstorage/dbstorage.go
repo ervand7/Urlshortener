@@ -2,11 +2,13 @@ package urlstorage
 
 import (
 	"context"
+	"fmt"
+	"time"
+
 	"github.com/ervand7/urlshortener/internal/app/database"
 	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
 	_errors "github.com/ervand7/urlshortener/internal/app/errors"
 	"github.com/ervand7/urlshortener/internal/app/utils"
-	"time"
 )
 
 const (
@@ -181,63 +183,22 @@ func (d *DBStorage) flush(ctx context.Context) {
 	go func() {
 		err := d.deleteBatch(ctx, toDelete)
 		if err != nil {
-			utils.Logger.Error(err.Error())
+			utils.Logger.Error(fmt.Printf("delete batch: %s", err.Error()))
 		}
 	}()
 }
 
 func (d *DBStorage) deleteBatch(ctx context.Context, shortUrls []string) error {
-	transaction, err := d.DB.Conn.Begin()
+	res, err := d.DB.Conn.ExecContext(ctx, "UPDATE url SET active = false WHERE shorts IN $1", shortUrls)
 	if err != nil {
-		return err
+		return fmt.Errorf("mass update: %w", err)
 	}
-	defer func() {
-		err = transaction.Rollback()
-		if err != nil {
-			utils.Logger.Error(err.Error())
-		}
-	}()
-
-	stmt, err := transaction.PrepareContext(ctx, q.DeleteUrl)
+	count, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return fmt.Errorf("checking count: %w", err)
 	}
-	defer func() {
-		err = stmt.Close()
-		if err != nil {
-			utils.Logger.Error(err.Error())
-		}
-	}()
-
-	for _, short := range shortUrls {
-		_, err := stmt.ExecContext(ctx, short)
-		if err != nil {
-			utils.Logger.Info(err.Error())
-			return err
-		}
+	if count != int64(len(shortUrls)) {
+		return fmt.Errorf("invalid count, expected %d, got %d", len(shortUrls), count)
 	}
-
-	return transaction.Commit()
-
-	/*
-		rows, err := d.DB.Conn.QueryContext(ctx, `select "active" from url where "short" = $1;`, shortUrls[0])
-		if err != nil {
-			utils.Logger.Info(err.Error())
-		}
-		defer d.DB.CloseRows(rows)
-
-		var active bool
-		for rows.Next() {
-			err = rows.Scan(&active)
-			if err != nil {
-				utils.Logger.Info(err.Error())
-			}
-		}
-		err = rows.Err()
-		if err != nil {
-			utils.Logger.Info(err.Error())
-		}
-		fmt.Println("active: ", active)
-		return nil
-	*/
+	return nil
 }
