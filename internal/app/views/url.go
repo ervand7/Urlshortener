@@ -3,13 +3,15 @@ package views
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/ervand7/urlshortener/internal/app/config"
 	"github.com/ervand7/urlshortener/internal/app/controllers/algorithms"
 	g "github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	e "github.com/ervand7/urlshortener/internal/app/errors"
 	"github.com/ervand7/urlshortener/internal/app/utils"
-	"io"
-	"net/http"
 )
 
 // URLShorten POST ("/")
@@ -251,6 +253,9 @@ func (server *Server) URLDeleteMany(w http.ResponseWriter, r *http.Request) {
 	if !algorithms.IsIntersection(userUrlsFromDB, urlsFromRequest) {
 		utils.Logger.Warn("user can delete only his own urls")
 	}
+
+	l := fmt.Sprintf("mass delete: url from request %v, db urls %v,  user %q", urlsFromRequest, userUrlsFromDB, string(decodedUserID))
+	utils.Logger.Info(l)
 
 	go func() {
 		server.DeleteURLs(urlsFromRequest)
