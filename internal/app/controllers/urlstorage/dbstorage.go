@@ -183,7 +183,7 @@ func (d *DBStorage) flush(ctx context.Context) {
 	go func() {
 		err := d.deleteBatch(ctx, toDelete)
 		if err != nil {
-			utils.Logger.Error(fmt.Printf("delete batch: %s", err.Error()))
+			utils.Logger.Error(fmt.Sprintf("delete batch: %s", err.Error()))
 		}
 	}()
 }
