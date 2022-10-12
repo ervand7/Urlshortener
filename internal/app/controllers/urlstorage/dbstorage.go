@@ -194,7 +194,7 @@ func (d *DBStorage) deleteBatch(ctx context.Context, shortUrls []string) error {
 	if err := arr.Set(shortUrls); err != nil {
 		return fmt.Errorf("prepare argument: %w", err)
 	}
-	res, err := d.DB.Conn.ExecContext(ctx, "UPDATE url SET active = false WHERE shorts ANY ($1)", arr)
+	res, err := d.DB.Conn.ExecContext(ctx, "UPDATE url SET active = false WHERE shorts = ANY ($1)", arr)
 	if err != nil {
 		return fmt.Errorf("mass update: %w", err)
 	}
