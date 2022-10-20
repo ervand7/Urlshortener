@@ -1,4 +1,4 @@
-package urlstorage
+package storage
 
 import (
 	"context"
@@ -57,8 +57,13 @@ func (m *MemoryStorage) GetUserURLs(
 	return userURLs, nil
 }
 
-func (m *MemoryStorage) SetMany(_ context.Context, _ []utils.DBEntry) error {
+func (m *MemoryStorage) SetMany(_ context.Context, _ []utils.Entry) error {
 	err := errors.New("not implemented")
 	utils.Logger.Error(err.Error())
 	return err
+}
+
+func (m *MemoryStorage) DeleteUserURLs(_ []string) {
+	err := errors.New("not implemented")
+	utils.Logger.Error(err.Error())
 }

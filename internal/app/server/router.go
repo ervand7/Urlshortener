@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/ervand7/urlshortener/internal/app/controllers/storage"
 	"github.com/ervand7/urlshortener/internal/app/views"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,16 +16,17 @@ func newRouter() chi.Router {
 	r.Use(GzipMiddleware)
 
 	server := views.Server{
-		Storage: GetServerStorage(),
+		Storage: storage.GetStorage(),
 	}
 
 	r.Route("/", func(r chi.Router) {
-		r.Post("/", server.URLShorten)
-		r.Post("/api/shorten", server.URLShortenJSON)
-		r.Post("/api/shorten/batch", server.URLShortenBatch)
-		r.Get("/{id:[a-zA-Z]+}", server.URLGet)
-		r.Get("/api/user/urls", server.URLUserAll)
-		r.Get("/ping", server.DBPing)
+		r.Post("/", server.ShortenURL)
+		r.Get("/{id:[a-zA-Z]+}", server.GetURL)
+		r.Post("/api/shorten", server.APIShortenURL)
+		r.Get("/api/user/urls", server.UserURLs)
+		r.Post("/api/shorten/batch", server.APIShortenBatch)
+		r.Delete("/api/user/urls", server.UserURLsDelete)
+		r.Get("/ping", server.PingDB)
 	})
 
 	return r

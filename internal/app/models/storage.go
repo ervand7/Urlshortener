@@ -7,7 +7,8 @@ import (
 
 type Storage interface {
 	Set(ctx context.Context, userID, short, origin string) error
-	SetMany(ctx context.Context, dbEntries []utils.DBEntry) error
+	SetMany(ctx context.Context, dbEntries []utils.Entry) error
 	Get(ctx context.Context, short string) (origin string, err error)
 	GetUserURLs(ctx context.Context, userID string) (result []map[string]string, err error)
+	DeleteUserURLs(shortUrls []string)
 }

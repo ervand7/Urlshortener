@@ -7,8 +7,8 @@ import (
 	"os"
 )
 
-// DBPing GET ("/ping")
-func (server *Server) DBPing(w http.ResponseWriter, _ *http.Request) {
+// PingDB GET ("/ping")
+func (server *Server) PingDB(w http.ResponseWriter, _ *http.Request) {
 	err := os.Setenv("DATABASE_DSN", "user=ervand password=ervand dbname=urlshortener host=localhost port=5432 sslmode=disable")
 	if err != nil {
 		utils.Logger.Error(err.Error())
