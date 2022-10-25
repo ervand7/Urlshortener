@@ -27,7 +27,7 @@ Content-Type: application/json
 ]
 
 ###
-GET http://localhost:8080/UPfTE
+GET http://localhost:8080/pVbor
 
 ###
 GET http://localhost:8080/api/user/urls
@@ -40,15 +40,15 @@ DELETE http://localhost:8080/api/user/urls
 Content-Type: application/json
 
 [
-  "JAwJg",
-  "gucuZ",
-  "HLequ",
-  "LaGeD",
-  "PWPpe",
-  "YumgX",
-  "eZmrJ",
-  "jQifa",
-  "QJxfm",
-  "PkKmO",
-  "UPfTE"
+  "http://localhost:8080/UPfTE",
+  "http://localhost:8080/gucuZ",
+  "http://localhost:8080/HLequ",
+  "http://localhost:8080/jQifa",
+  "http://localhost:8080/YumgX",
+  "http://localhost:8080/QJxfm",
+  "http://localhost:8080/PkKmO",
+  "http://localhost:8080/JAwJg",
+  "http://localhost:8080/eZmrJ",
+  "http://localhost:8080/LaGeD",
+  "http://localhost:8080/PWPpe"
 ]

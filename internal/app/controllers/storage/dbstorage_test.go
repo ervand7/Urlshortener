@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	d "github.com/ervand7/urlshortener/internal/app/database"
-	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
 	"github.com/ervand7/urlshortener/internal/app/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +17,7 @@ func TestNewDBStorage(t *testing.T) {
 	}
 	db := d.Database{}
 	defer func() {
-		_, err := db.Conn.Exec(q.DropAll)
+		err := db.Downgrade()
 		assert.NoError(t, err)
 	}()
 
@@ -38,7 +37,7 @@ func TestDBStorage_Set(t *testing.T) {
 	db.Run()
 	dbStorage := DBStorage{db: db}
 	defer func() {
-		_, err := db.Conn.Exec(q.DropAll)
+		err := db.Downgrade()
 		assert.NoError(t, err)
 	}()
 
@@ -86,7 +85,7 @@ func TestDBStorage_SetMany(t *testing.T) {
 	db.Run()
 	dbStorage := DBStorage{db: db}
 	defer func() {
-		_, err := db.Conn.Exec(q.DropAll)
+		err := db.Downgrade()
 		assert.NoError(t, err)
 	}()
 
@@ -149,7 +148,7 @@ func TestDBStorage_Get(t *testing.T) {
 	db.Run()
 	dbStorage := DBStorage{db: db}
 	defer func() {
-		_, err := db.Conn.Exec(q.DropAll)
+		err := db.Downgrade()
 		assert.NoError(t, err)
 	}()
 
@@ -175,7 +174,7 @@ func TestDBStorage_GetUserURLs(t *testing.T) {
 	db.Run()
 	dbStorage := DBStorage{db: db}
 	defer func() {
-		_, err := db.Conn.Exec(q.DropAll)
+		err := db.Downgrade()
 		assert.NoError(t, err)
 	}()
 
@@ -221,7 +220,7 @@ func TestDBStorage_DeleteUserURLs(t *testing.T) {
 	db.Run()
 	dbStorage := NewDBStorage(db)
 	defer func() {
-		_, err := db.Conn.Exec(q.DropAll)
+		err := db.Downgrade()
 		assert.NoError(t, err)
 	}()
 
