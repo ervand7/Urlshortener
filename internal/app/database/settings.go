@@ -3,11 +3,13 @@ package database
 import (
 	"database/sql"
 	"github.com/ervand7/urlshortener/internal/app/config"
-	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
 	"github.com/ervand7/urlshortener/internal/app/utils"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/pressly/goose/v3"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 )
@@ -21,8 +23,8 @@ func (db *Database) Run() {
 	if err != nil {
 		utils.Logger.Fatal(err.Error())
 	}
-	db.SetConnPool()
-	err = db.CreateAll()
+	db.setConnPool()
+	err = db.migrate()
 	if err != nil {
 		utils.Logger.Fatal(err.Error())
 	}
@@ -43,8 +45,7 @@ func (db *Database) Run() {
 }
 
 func (db *Database) ConnStart() (err error) {
-	conn, err := sql.Open("pgx",
-		config.GetConfig().DatabaseDSN)
+	conn, err := goose.OpenDBWithDriver("pgx", config.GetConfig().DatabaseDSN)
 	if err != nil {
 		return err
 	}
@@ -60,23 +61,8 @@ func (db *Database) ConnClose() (err error) {
 	return nil
 }
 
-func (db *Database) SetConnPool() {
-	db.Conn.SetMaxOpenConns(20)
-	db.Conn.SetMaxIdleConns(20)
-	db.Conn.SetConnMaxIdleTime(time.Second * 30)
-	db.Conn.SetConnMaxLifetime(time.Minute * 2)
-}
-
-func (db *Database) Ping() error {
-	err := db.Conn.Ping()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (db *Database) CreateAll() error {
-	_, err := db.Conn.Exec(q.CreateAll)
+func (db *Database) Ping() (err error) {
+	err = db.Conn.Ping()
 	if err != nil {
 		return err
 	}
@@ -87,4 +73,32 @@ func (db *Database) CloseRows(rows *sql.Rows) {
 	if err := rows.Close(); err != nil {
 		utils.Logger.Error(err.Error())
 	}
+}
+
+func (db *Database) Downgrade() (err error) {
+	if err = goose.Run("down", db.Conn, getMigrationsDir()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *Database) migrate() (err error) {
+	if err = goose.Run("up", db.Conn, getMigrationsDir()); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (db *Database) setConnPool() {
+	db.Conn.SetMaxOpenConns(20)
+	db.Conn.SetMaxIdleConns(20)
+	db.Conn.SetConnMaxIdleTime(time.Second * 30)
+	db.Conn.SetConnMaxLifetime(time.Minute * 2)
+}
+
+func getMigrationsDir() string {
+	_, currentFile, _, _ := runtime.Caller(0)
+	currentDir := filepath.Dir(currentFile)
+	migrationsDir := filepath.Join(currentDir, "/../../migrations")
+	return migrationsDir
 }

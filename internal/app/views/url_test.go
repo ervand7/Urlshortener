@@ -9,7 +9,6 @@ import (
 	"github.com/ervand7/urlshortener/internal/app/controllers/generatedata"
 	s "github.com/ervand7/urlshortener/internal/app/controllers/storage"
 	"github.com/ervand7/urlshortener/internal/app/database"
-	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -87,7 +86,7 @@ func TestShortenURL(t *testing.T) {
 				case *s.DBStorage:
 					db := database.Database{}
 					db.Run()
-					_, err := db.Conn.Exec(q.DropAll)
+					err := db.Downgrade()
 					assert.NoError(t, err)
 				}
 			}()
@@ -162,7 +161,7 @@ func TestShortenURL409(t *testing.T) {
 				Storage: s.NewDBStorage(db),
 			}
 			defer func() {
-				_, err := db.Conn.Exec(q.DropAll)
+				err := db.Downgrade()
 				assert.NoError(t, err)
 			}()
 
@@ -261,7 +260,7 @@ func TestGetURL(t *testing.T) {
 				case *s.DBStorage:
 					db := database.Database{}
 					db.Run()
-					_, err := db.Conn.Exec(q.DropAll)
+					err := db.Downgrade()
 					assert.NoError(t, err)
 				}
 			}()
@@ -297,7 +296,7 @@ func TestGetURL410(t *testing.T) {
 		Storage: s.NewDBStorage(db),
 	}
 	defer func() {
-		_, err := db.Conn.Exec(q.DropAll)
+		err := db.Downgrade()
 		assert.NoError(t, err)
 	}()
 
@@ -404,7 +403,7 @@ func TestAPIShortenURL(t *testing.T) {
 				case *s.DBStorage:
 					db := database.Database{}
 					db.Run()
-					_, err := db.Conn.Exec(q.DropAll)
+					err := db.Downgrade()
 					assert.NoError(t, err)
 				}
 			}()
@@ -487,7 +486,7 @@ func TestUserURLs(t *testing.T) {
 				case *s.DBStorage:
 					db := database.Database{}
 					db.Run()
-					_, err := db.Conn.Exec(q.DropAll)
+					err := db.Downgrade()
 					assert.NoError(t, err)
 				}
 			}()
@@ -594,7 +593,7 @@ func TestAPIShortenBatch(t *testing.T) {
 				Storage: s.NewDBStorage(db),
 			}
 			defer func() {
-				_, err := db.Conn.Exec(q.DropAll)
+				err := db.Downgrade()
 				assert.NoError(t, err)
 			}()
 
@@ -640,7 +639,7 @@ func TestUserURLsDelete(t *testing.T) {
 		Storage: s.NewDBStorage(db),
 	}
 	defer func() {
-		_, err := db.Conn.Exec(q.DropAll)
+		err := db.Downgrade()
 		assert.NoError(t, err)
 	}()
 
