@@ -3,7 +3,7 @@ package config
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
-	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/ervand7/urlshortener/internal/app/logger"
 )
 
 var (
@@ -31,7 +31,7 @@ func GetConfig() Config {
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {
-		utils.Logger.Fatal(err.Error())
+		logger.Logger.Fatal(err.Error())
 	}
 
 	flag.Parse()

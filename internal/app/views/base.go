@@ -2,8 +2,8 @@ package views
 
 import (
 	"encoding/hex"
+	"github.com/ervand7/urlshortener/internal/app/logger"
 	"github.com/ervand7/urlshortener/internal/app/models"
-	"github.com/ervand7/urlshortener/internal/app/utils"
 	"github.com/google/uuid"
 	"net/http"
 	"time"
@@ -28,7 +28,7 @@ func (server Server) GetOrCreateUserIDFromCookie(
 		encoded := userIDFromCookie.Value
 		decoded, err := hex.DecodeString(encoded)
 		if err != nil {
-			utils.Logger.Error(err.Error())
+			logger.Logger.Error(err.Error())
 			return ""
 		}
 		userID = string(decoded)
@@ -44,13 +44,13 @@ func (server Server) setCookie(encodedUserID string, w http.ResponseWriter) {
 func (server Server) Write(msg []byte, w http.ResponseWriter) {
 	_, err := w.Write(msg)
 	if err != nil {
-		utils.Logger.Error(err.Error())
+		logger.Logger.Error(err.Error())
 	}
 }
 
 func (server Server) CloseBody(r *http.Request) {
 	err := r.Body.Close()
 	if err != nil {
-		utils.Logger.Warn(err.Error())
+		logger.Logger.Warn(err.Error())
 	}
 }

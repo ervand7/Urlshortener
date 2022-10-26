@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"github.com/ervand7/urlshortener/internal/app/config"
-	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/ervand7/urlshortener/internal/app/logger"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/pressly/goose/v3"
 	"os"
@@ -21,12 +21,12 @@ type Database struct {
 func (db *Database) Run() {
 	err := db.ConnStart()
 	if err != nil {
-		utils.Logger.Fatal(err.Error())
+		logger.Logger.Fatal(err.Error())
 	}
 	db.setConnPool()
 	err = db.migrate()
 	if err != nil {
-		utils.Logger.Fatal(err.Error())
+		logger.Logger.Fatal(err.Error())
 	}
 
 	ch := make(chan os.Signal, 3)
@@ -36,9 +36,9 @@ func (db *Database) Run() {
 		signal.Stop(ch)
 		err = db.ConnClose()
 		if err != nil {
-			utils.Logger.Error(err.Error())
+			logger.Logger.Error(err.Error())
 		} else {
-			utils.Logger.Info("Connection to DB was closed")
+			logger.Logger.Info("Connection to DB was closed")
 		}
 		os.Exit(0)
 	}()
@@ -71,7 +71,7 @@ func (db *Database) Ping() (err error) {
 
 func (db *Database) CloseRows(rows *sql.Rows) {
 	if err := rows.Close(); err != nil {
-		utils.Logger.Error(err.Error())
+		logger.Logger.Error(err.Error())
 	}
 }
 

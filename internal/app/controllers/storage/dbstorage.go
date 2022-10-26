@@ -5,7 +5,8 @@ import (
 	"github.com/ervand7/urlshortener/internal/app/database"
 	q "github.com/ervand7/urlshortener/internal/app/database/rawqueries"
 	_errors "github.com/ervand7/urlshortener/internal/app/errors"
-	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/ervand7/urlshortener/internal/app/logger"
+	"github.com/ervand7/urlshortener/internal/app/models"
 	"github.com/lib/pq"
 	"time"
 )
@@ -60,7 +61,7 @@ func (d *DBStorage) Set(ctx context.Context, userID, short, origin string) error
 	return nil
 }
 
-func (d *DBStorage) SetMany(ctx context.Context, dbEntries []utils.Entry) error {
+func (d *DBStorage) SetMany(ctx context.Context, dbEntries []models.Entry) error {
 	transaction, err := d.db.Conn.Begin()
 	if err != nil {
 		return err
@@ -76,7 +77,7 @@ func (d *DBStorage) SetMany(ctx context.Context, dbEntries []utils.Entry) error 
 	defer func() {
 		err = stmt.Close()
 		if err != nil {
-			utils.Logger.Error(err.Error())
+			logger.Logger.Error(err.Error())
 		}
 	}()
 
@@ -174,7 +175,7 @@ func (d *DBStorage) flush(ctx context.Context) {
 	go func() {
 		err := d.deleteBatch(ctx, toDelete)
 		if err != nil {
-			utils.Logger.Error(err.Error())
+			logger.Logger.Error(err.Error())
 		}
 	}()
 }

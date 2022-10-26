@@ -3,7 +3,8 @@ package filestorage
 import (
 	"context"
 	"errors"
-	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/ervand7/urlshortener/internal/app/logger"
+	"github.com/ervand7/urlshortener/internal/app/models"
 	"sync"
 )
 
@@ -22,7 +23,7 @@ func (f *FileStorage) Set(
 	}
 	defer func() {
 		if err := producer.Close(); err != nil {
-			utils.Logger.Warn(err.Error())
+			logger.Logger.Warn(err.Error())
 		}
 	}()
 
@@ -45,7 +46,7 @@ func (f *FileStorage) Get(
 	}
 	defer func() {
 		if err := consumer.Close(); err != nil {
-			utils.Logger.Warn(err.Error())
+			logger.Logger.Warn(err.Error())
 		}
 	}()
 
@@ -60,9 +61,9 @@ func (f *FileStorage) Get(
 	return origin, nil
 }
 
-func (f *FileStorage) SetMany(_ context.Context, _ []utils.Entry) error {
+func (f *FileStorage) SetMany(_ context.Context, _ []models.Entry) error {
 	err := errors.New("not implemented")
-	utils.Logger.Error(err.Error())
+	logger.Logger.Error(err.Error())
 	return err
 }
 
@@ -70,11 +71,11 @@ func (f *FileStorage) GetUserURLs(
 	_ context.Context, _ string,
 ) (result []map[string]string, err error) {
 	err = errors.New("not implemented")
-	utils.Logger.Error(err.Error())
+	logger.Logger.Error(err.Error())
 	return nil, err
 }
 
 func (f *FileStorage) DeleteUserURLs(_ []string) {
 	err := errors.New("not implemented")
-	utils.Logger.Error(err.Error())
+	logger.Logger.Error(err.Error())
 }

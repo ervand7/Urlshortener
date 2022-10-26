@@ -2,7 +2,7 @@ package server
 
 import (
 	"compress/gzip"
-	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/ervand7/urlshortener/internal/app/logger"
 	"net/http"
 )
 
@@ -11,13 +11,13 @@ func GzipMiddleware(next http.Handler) http.Handler {
 		if r.Header.Get("Content-Encoding") == "gzip" {
 			gzipWrappedBody, err := gzip.NewReader(r.Body)
 			if err != nil {
-				utils.Logger.Error(err.Error())
+				logger.Logger.Error(err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			defer func() {
 				if err := gzipWrappedBody.Close(); err != nil {
-					utils.Logger.Warn(err.Error())
+					logger.Logger.Warn(err.Error())
 				}
 			}()
 			r.Body = gzipWrappedBody

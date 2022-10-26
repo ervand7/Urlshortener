@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	d "github.com/ervand7/urlshortener/internal/app/database"
-	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/ervand7/urlshortener/internal/app/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"os"
@@ -90,7 +90,7 @@ func TestDBStorage_SetMany(t *testing.T) {
 	}()
 
 	userID := uuid.New().String()
-	toInsert := []utils.Entry{
+	toInsert := []models.Entry{
 		{
 			UserID: userID,
 			Short:  "http://hello1",
@@ -225,7 +225,7 @@ func TestDBStorage_DeleteUserURLs(t *testing.T) {
 	}()
 
 	userID := uuid.New().String()
-	toInsert := []utils.Entry{
+	toInsert := []models.Entry{
 		{
 			UserID: userID,
 			Short:  "http://hello1",

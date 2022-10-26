@@ -3,7 +3,8 @@ package storage
 import (
 	"context"
 	"errors"
-	"github.com/ervand7/urlshortener/internal/app/utils"
+	"github.com/ervand7/urlshortener/internal/app/logger"
+	"github.com/ervand7/urlshortener/internal/app/models"
 	"sync"
 )
 
@@ -57,13 +58,13 @@ func (m *MemoryStorage) GetUserURLs(
 	return userURLs, nil
 }
 
-func (m *MemoryStorage) SetMany(_ context.Context, _ []utils.Entry) error {
+func (m *MemoryStorage) SetMany(_ context.Context, _ []models.Entry) error {
 	err := errors.New("not implemented")
-	utils.Logger.Error(err.Error())
+	logger.Logger.Error(err.Error())
 	return err
 }
 
 func (m *MemoryStorage) DeleteUserURLs(_ []string) {
 	err := errors.New("not implemented")
-	utils.Logger.Error(err.Error())
+	logger.Logger.Error(err.Error())
 }
