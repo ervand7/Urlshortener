@@ -3,7 +3,7 @@ package views
 import (
 	"context"
 	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/generatedata"
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
 	s "github.com/ervand7/urlshortener/internal/controllers/storage"
 	"github.com/ervand7/urlshortener/internal/database"
 	"github.com/google/uuid"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestGetURL(t *testing.T) {
-	short := generatedata.ShortenURL()
+	short := algorithms.GenerateShortURL()
 
 	type want struct {
 		statusCode int
@@ -105,7 +105,7 @@ func TestGetURL410(t *testing.T) {
 	}
 
 	userID := uuid.New().String()
-	short := generatedata.ShortenURL()
+	short := algorithms.GenerateShortURL()
 	origin := "world"
 	_, err := db.Conn.Exec(
 		`insert into url ("user_id", "short", "origin", "active") values ($1, $2, $3, $4)`,

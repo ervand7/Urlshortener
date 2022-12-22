@@ -3,7 +3,7 @@ package views
 import (
 	"context"
 	"encoding/json"
-	g "github.com/ervand7/urlshortener/internal/controllers/generatedata"
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
 	e "github.com/ervand7/urlshortener/internal/errors"
 	"github.com/ervand7/urlshortener/internal/logger"
 	"io"
@@ -40,7 +40,7 @@ func (server *Server) APIShortenURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := server.GetOrCreateUserIDFromCookie(w, r)
-	short := g.ShortenURL()
+	short := algorithms.GenerateShortURL()
 	httpStatus := http.StatusCreated
 
 	ctx, cancel := context.WithTimeout(r.Context(), ctxTime*time.Second)

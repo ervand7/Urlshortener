@@ -4,7 +4,6 @@ go test \
   github.com/ervand7/urlshortener/internal/config \
   github.com/ervand7/urlshortener/internal/controllers/algorithms \
   github.com/ervand7/urlshortener/internal/controllers/storage/filestorage \
-  github.com/ervand7/urlshortener/internal/controllers/generatedata \
   github.com/ervand7/urlshortener/internal/server \
   github.com/ervand7/urlshortener/internal/views/ \
   -count 1 -v -p 1 -bench=. -cpu 5 -benchmem

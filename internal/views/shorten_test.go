@@ -3,7 +3,7 @@ package views
 import (
 	"bytes"
 	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/generatedata"
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
 	s "github.com/ervand7/urlshortener/internal/controllers/storage"
 	"github.com/ervand7/urlshortener/internal/database"
 	"github.com/gorilla/mux"
@@ -19,7 +19,7 @@ import (
 func TestShortenURL(t *testing.T) {
 	lenRespBody := len(config.GetConfig().BaseURL) +
 		len("/") +
-		generatedata.ShortenEndpointLen
+		algorithms.ShortenEndpointLen
 
 	type want struct {
 		contentType string

@@ -51,7 +51,7 @@ func (server *Server) UserURLsDelete(w http.ResponseWriter, r *http.Request) {
 		logger.Logger.Warn("user can delete only his own urls")
 	}
 
-	algorithms.PrepareShortened(urlsFromRequest)
+	algorithms.MakeURLsFromEndpoints(urlsFromRequest)
 	go func() {
 		server.Storage.DeleteUserURLs(urlsFromRequest)
 	}()

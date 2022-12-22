@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/generatedata"
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
 	s "github.com/ervand7/urlshortener/internal/controllers/storage"
 	"github.com/ervand7/urlshortener/internal/database"
 	"github.com/gorilla/mux"
@@ -19,7 +19,7 @@ import (
 func TestAPIShortenURL(t *testing.T) {
 	lenResultURL := len(config.GetConfig().BaseURL) +
 		len("/") +
-		generatedata.ShortenEndpointLen
+		algorithms.ShortenEndpointLen
 	const Endpoint string = "/api/shorten"
 
 	type want struct {
