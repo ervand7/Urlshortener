@@ -2,8 +2,9 @@ package server
 
 import (
 	"compress/gzip"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"net/http"
+
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
 func GzipMiddleware(next http.Handler) http.Handler {

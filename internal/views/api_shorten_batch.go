@@ -3,12 +3,13 @@ package views
 import (
 	"context"
 	"encoding/json"
-	g "github.com/ervand7/urlshortener/internal/controllers/generatedata"
-	"github.com/ervand7/urlshortener/internal/logger"
-	"github.com/ervand7/urlshortener/internal/models"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	"github.com/ervand7/urlshortener/internal/logger"
+	"github.com/ervand7/urlshortener/internal/models"
 )
 
 // APIShortenBatch POST ("/api/shorten/batch")
@@ -47,7 +48,7 @@ func (server *Server) APIShortenBatch(w http.ResponseWriter, r *http.Request) {
 
 	userID := server.GetOrCreateUserIDFromCookie(w, r)
 	for _, val := range reqPairs {
-		short := g.ShortenURL()
+		short := algorithms.GenerateShortURL()
 		respPair := RespPair{CorrelationID: val.CorrelationID, ShortURL: short}
 		respPairs = append(respPairs, respPair)
 

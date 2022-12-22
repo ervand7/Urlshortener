@@ -3,23 +3,24 @@ package views
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/generatedata"
-	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/database"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	s "github.com/ervand7/urlshortener/internal/controllers/storage"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAPIShortenURL(t *testing.T) {
-	lenResultURL := len(config.GetConfig().BaseURL) +
+	lenResultURL := len(config.GetBaseURL()) +
 		len("/") +
-		generatedata.ShortenEndpointLen
+		algorithms.ShortenEndpointLen
 	const Endpoint string = "/api/shorten"
 
 	type want struct {
@@ -95,8 +96,8 @@ func TestAPIShortenURL(t *testing.T) {
 			}
 			defer func() {
 				switch server.Storage.(type) {
-				case *s.DBStorage:
-					database.Downgrade()
+				case *dbstorage.DBStorage:
+					dbstorage.Downgrade()
 				}
 			}()
 

@@ -2,24 +2,25 @@ package views
 
 import (
 	"bytes"
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/generatedata"
-	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/database"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	s "github.com/ervand7/urlshortener/internal/controllers/storage"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestShortenURL(t *testing.T) {
-	lenRespBody := len(config.GetConfig().BaseURL) +
+	lenRespBody := len(config.GetBaseURL()) +
 		len("/") +
-		generatedata.ShortenEndpointLen
+		algorithms.ShortenEndpointLen
 
 	type want struct {
 		contentType string
@@ -78,8 +79,8 @@ func TestShortenURL(t *testing.T) {
 			}
 			defer func() {
 				switch server.Storage.(type) {
-				case *s.DBStorage:
-					database.Downgrade()
+				case *dbstorage.DBStorage:
+					dbstorage.Downgrade()
 				}
 			}()
 
@@ -146,11 +147,11 @@ func TestShortenURL409(t *testing.T) {
 				bytes.NewBuffer(body),
 			)
 
-			defer database.Downgrade()
-			db := database.Database{}
+			defer dbstorage.Downgrade()
+			db := dbstorage.Database{}
 			db.Run()
 			server := Server{
-				Storage: s.NewDBStorage(db),
+				Storage: dbstorage.NewDBStorage(db),
 			}
 
 			var handler func(w http.ResponseWriter, r *http.Request)

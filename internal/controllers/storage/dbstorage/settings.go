@@ -1,14 +1,15 @@
-package database
+package dbstorage
 
 import (
 	"database/sql"
+	"path/filepath"
+	"runtime"
+	"time"
+
 	"github.com/ervand7/urlshortener/internal/config"
 	"github.com/ervand7/urlshortener/internal/logger"
 	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/pressly/goose/v3"
-	"path/filepath"
-	"runtime"
-	"time"
 )
 
 const (
@@ -35,7 +36,7 @@ func (db *Database) Run() {
 }
 
 func (db *Database) ConnStart() (err error) {
-	conn, err := goose.OpenDBWithDriver("pgx", config.GetConfig().DatabaseDSN)
+	conn, err := goose.OpenDBWithDriver("pgx", config.GetDatabaseDSN())
 	if err != nil {
 		return err
 	}
@@ -82,6 +83,6 @@ func (db *Database) setConnPool() {
 func getMigrationsDir() string {
 	_, currentFile, _, _ := runtime.Caller(0)
 	currentDir := filepath.Dir(currentFile)
-	migrationsDir := filepath.Join(currentDir, "/../../migrations")
+	migrationsDir := filepath.Join(currentDir, "/../../../../migrations")
 	return migrationsDir
 }

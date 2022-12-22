@@ -1,29 +1,43 @@
-package storage
+package dbstorage
 
 import (
 	"context"
-	"github.com/ervand7/urlshortener/internal/database"
+	"time"
+
 	_errors "github.com/ervand7/urlshortener/internal/errors"
 	"github.com/ervand7/urlshortener/internal/logger"
 	"github.com/ervand7/urlshortener/internal/models"
 	"github.com/lib/pq"
-	"time"
 )
 
 const (
-	BufLen  int           = 3
-	Timeout time.Duration = 2
+	BufLen   int           = 3
+	Timeout  time.Duration = 2
+	setQuery string        = `
+		with cte as (
+			insert into url ("user_id", "short", "origin")
+				values ($1, $2, $3)
+				on conflict ("origin") do nothing
+				returning "short")
+		select 'null'
+		where exists(select 1 from cte)
+		union all
+		select "short"
+		from url
+		where "origin" = $3
+		  and not exists(select 1 from cte);
+`
 )
 
 type DBStorage struct {
-	db         database.Database
+	db         Database
 	delChan    chan string
 	buf        []string
 	resetTimer bool
 	timer      *time.Timer
 }
 
-func NewDBStorage(db database.Database) *DBStorage {
+func NewDBStorage(db Database) *DBStorage {
 	storage := &DBStorage{
 		db:         db,
 		delChan:    make(chan string),
@@ -37,7 +51,7 @@ func NewDBStorage(db database.Database) *DBStorage {
 
 func (d *DBStorage) Set(ctx context.Context, userID, short, origin string) error {
 	var existsShort string
-	rows, err := d.db.Conn.QueryContext(ctx, database.Set, userID, short, origin)
+	rows, err := d.db.Conn.QueryContext(ctx, setQuery, userID, short, origin)
 	if err != nil {
 		return err
 	}
@@ -69,7 +83,7 @@ func (d *DBStorage) SetMany(ctx context.Context, dbEntries []models.Entry) error
 		transaction.Rollback()
 	}()
 
-	stmt, err := transaction.PrepareContext(ctx, database.Set)
+	stmt, err := transaction.PrepareContext(ctx, setQuery)
 	if err != nil {
 		return err
 	}
@@ -90,7 +104,9 @@ func (d *DBStorage) SetMany(ctx context.Context, dbEntries []models.Entry) error
 }
 
 func (d *DBStorage) Get(ctx context.Context, short string) (origin string, err error) {
-	row := d.db.Conn.QueryRowContext(ctx, database.Get, short)
+	row := d.db.Conn.QueryRowContext(
+		ctx, `select "origin", "active" from url where "short" = $1;`, short,
+	)
 	var active bool
 
 	err = row.Scan(&origin, &active)
@@ -107,7 +123,9 @@ func (d *DBStorage) Get(ctx context.Context, short string) (origin string, err e
 func (d *DBStorage) GetUserURLs(
 	ctx context.Context, userID string,
 ) (result []map[string]string, err error) {
-	rows, err := d.db.Conn.QueryContext(ctx, database.GetUserURLs, userID)
+	rows, err := d.db.Conn.QueryContext(
+		ctx, `select "short", "origin" from url where "user_id" = $1;`, userID,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +198,11 @@ func (d *DBStorage) flush(ctx context.Context) {
 }
 
 func (d *DBStorage) deleteBatch(ctx context.Context, shortUrls []string) error {
-	_, err := d.db.Conn.ExecContext(ctx, database.DeleteURL, pq.Array(shortUrls))
+	_, err := d.db.Conn.ExecContext(
+		ctx,
+		`update url set "active" = false  where "short" = ANY($1)`,
+		pq.Array(shortUrls),
+	)
 	if err != nil {
 		return err
 	}

@@ -1,10 +1,11 @@
-package storage
+package memorystorage
 
 import (
 	"context"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestMemoryStorage(t *testing.T) {

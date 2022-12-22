@@ -3,8 +3,9 @@ package filestorage
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
 	"os"
+
+	"github.com/ervand7/urlshortener/internal/config"
 )
 
 type producer struct {
@@ -31,7 +32,7 @@ func (p *producer) Close() error {
 }
 
 func newProducer() (*producer, error) {
-	filename := config.GetConfig().FileStoragePath
+	filename := config.GetFileStoragePath()
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		return nil, err

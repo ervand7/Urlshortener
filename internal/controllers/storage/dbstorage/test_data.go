@@ -1,4 +1,4 @@
-package database
+package dbstorage
 
 import (
 	"github.com/ervand7/urlshortener/internal/logger"

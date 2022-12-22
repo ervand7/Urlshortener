@@ -3,9 +3,10 @@ package filestorage
 import (
 	"context"
 	"errors"
+	"sync"
+
 	"github.com/ervand7/urlshortener/internal/logger"
 	"github.com/ervand7/urlshortener/internal/models"
-	"sync"
 )
 
 type FileStorage struct {
