@@ -3,7 +3,7 @@ package views
 import (
 	"bytes"
 	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/controllers/storage/db_storage"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,8 +62,8 @@ func TestUserURLs(t *testing.T) {
 			}
 			defer func() {
 				switch server.Storage.(type) {
-				case *db_storage.DBStorage:
-					db_storage.Downgrade()
+				case *dbstorage.DBStorage:
+					dbstorage.Downgrade()
 				}
 			}()
 

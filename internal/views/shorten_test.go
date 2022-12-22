@@ -5,7 +5,7 @@ import (
 	"github.com/ervand7/urlshortener/internal/config"
 	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
 	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/controllers/storage/db_storage"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -78,8 +78,8 @@ func TestShortenURL(t *testing.T) {
 			}
 			defer func() {
 				switch server.Storage.(type) {
-				case *db_storage.DBStorage:
-					db_storage.Downgrade()
+				case *dbstorage.DBStorage:
+					dbstorage.Downgrade()
 				}
 			}()
 
@@ -146,11 +146,11 @@ func TestShortenURL409(t *testing.T) {
 				bytes.NewBuffer(body),
 			)
 
-			defer db_storage.Downgrade()
-			db := db_storage.Database{}
+			defer dbstorage.Downgrade()
+			db := dbstorage.Database{}
 			db.Run()
 			server := Server{
-				Storage: db_storage.NewDBStorage(db),
+				Storage: dbstorage.NewDBStorage(db),
 			}
 
 			var handler func(w http.ResponseWriter, r *http.Request)

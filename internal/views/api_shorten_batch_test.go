@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/storage/db_storage"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -68,11 +68,11 @@ func TestAPIShortenBatch(t *testing.T) {
 				bytes.NewBuffer(reqBody),
 			)
 
-			defer db_storage.Downgrade()
-			db := db_storage.Database{}
+			defer dbstorage.Downgrade()
+			db := dbstorage.Database{}
 			db.Run()
 			server := Server{
-				Storage: db_storage.NewDBStorage(db),
+				Storage: dbstorage.NewDBStorage(db),
 			}
 
 			router := mux.NewRouter()

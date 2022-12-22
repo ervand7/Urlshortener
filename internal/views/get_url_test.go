@@ -5,7 +5,7 @@ import (
 	"github.com/ervand7/urlshortener/internal/config"
 	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
 	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/controllers/storage/db_storage"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -68,8 +68,8 @@ func TestGetURL(t *testing.T) {
 			}
 			defer func() {
 				switch server.Storage.(type) {
-				case *db_storage.DBStorage:
-					db_storage.Downgrade()
+				case *dbstorage.DBStorage:
+					dbstorage.Downgrade()
 				}
 			}()
 
@@ -97,11 +97,11 @@ func TestGetURL410(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer db_storage.Downgrade()
-	db := db_storage.Database{}
+	defer dbstorage.Downgrade()
+	db := dbstorage.Database{}
 	db.Run()
 	server := Server{
-		Storage: db_storage.NewDBStorage(db),
+		Storage: dbstorage.NewDBStorage(db),
 	}
 
 	userID := uuid.New().String()

@@ -1,4 +1,4 @@
-package db_storage
+package dbstorage
 
 import (
 	"context"
