@@ -1,12 +1,14 @@
 package logger
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
+// zap.Logger settings
 var (
 	Logger       *zap.Logger
 	logInitError error
@@ -19,6 +21,7 @@ func init() {
 	}
 }
 
+// New logger constructor
 func New(level string) (*zap.Logger, error) {
 	cfg := zap.NewProductionConfig()
 

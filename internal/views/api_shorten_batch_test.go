@@ -3,17 +3,17 @@ package views
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
-	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/database"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAPIShortenBatch(t *testing.T) {
@@ -69,11 +69,11 @@ func TestAPIShortenBatch(t *testing.T) {
 				bytes.NewBuffer(reqBody),
 			)
 
-			defer database.Downgrade()
-			db := database.Database{}
+			defer dbstorage.Downgrade()
+			db := dbstorage.Database{}
 			db.Run()
 			server := Server{
-				Storage: s.NewDBStorage(db),
+				Storage: dbstorage.NewDBStorage(db),
 			}
 
 			router := mux.NewRouter()
@@ -93,7 +93,7 @@ func TestAPIShortenBatch(t *testing.T) {
 				ShortURL      string `json:"short_url"`
 			}
 			var respPairs []RespPair
-			respBody, err := ioutil.ReadAll(response.Body)
+			respBody, err := io.ReadAll(response.Body)
 			require.NoError(t, err)
 
 			err = json.Unmarshal(respBody, &respPairs)
