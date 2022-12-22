@@ -2,21 +2,23 @@ package views
 
 import (
 	"context"
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/generatedata"
-	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/database"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	s "github.com/ervand7/urlshortener/internal/controllers/storage"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
 )
 
 func TestGetURL(t *testing.T) {
-	short := generatedata.ShortenURL()
+	short := algorithms.GenerateShortURL()
 
 	type want struct {
 		statusCode int
@@ -67,9 +69,8 @@ func TestGetURL(t *testing.T) {
 				Storage: s.GetStorage(),
 			}
 			defer func() {
-				switch server.Storage.(type) {
-				case *s.DBStorage:
-					database.Downgrade()
+				if _, ok := server.Storage.(*dbstorage.DBStorage); ok {
+					dbstorage.Downgrade()
 				}
 			}()
 
@@ -97,15 +98,15 @@ func TestGetURL410(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer dbstorage.Downgrade()
+	db := dbstorage.Database{}
 	db.Run()
 	server := Server{
-		Storage: s.NewDBStorage(db),
+		Storage: dbstorage.NewDBStorage(db),
 	}
 
 	userID := uuid.New().String()
-	short := generatedata.ShortenURL()
+	short := algorithms.GenerateShortURL()
 	origin := "world"
 	_, err := db.Conn.Exec(
 		`insert into url ("user_id", "short", "origin", "active") values ($1, $2, $3, $4)`,

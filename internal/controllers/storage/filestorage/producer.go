@@ -3,8 +3,9 @@ package filestorage
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
 	"os"
+
+	"github.com/ervand7/urlshortener/internal/config"
 )
 
 type producer struct {
@@ -12,7 +13,7 @@ type producer struct {
 	writer *bufio.Writer
 }
 
-func (p *producer) WriteEvent(urlMap map[string]string) error {
+func (p *producer) writeEvent(urlMap map[string]string) error {
 	row, err := json.Marshal(urlMap)
 	if err != nil {
 		return err
@@ -26,12 +27,12 @@ func (p *producer) WriteEvent(urlMap map[string]string) error {
 	return p.writer.Flush()
 }
 
-func (p *producer) Close() error {
+func (p *producer) close() error {
 	return p.file.Close()
 }
 
 func newProducer() (*producer, error) {
-	filename := config.GetConfig().FileStoragePath
+	filename := config.GetFileStoragePath()
 	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0777)
 	if err != nil {
 		return nil, err

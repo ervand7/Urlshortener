@@ -2,10 +2,12 @@ package server
 
 import (
 	"compress/gzip"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"net/http"
+
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
+// GzipMiddleware handles gzip body.
 func GzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Encoding") == "gzip" {

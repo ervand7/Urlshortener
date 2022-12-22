@@ -2,10 +2,12 @@ package filestorage
 
 import (
 	"context"
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ervand7/urlshortener/internal/config"
 )
 
 func TestFileStorage(t *testing.T) {
@@ -19,7 +21,7 @@ func TestFileStorage(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 	os.Args = []string{"test", "-f", filePath}
-	assert.Equal(t, config.GetConfig().FileStoragePath, filePath)
+	assert.Equal(t, config.GetFileStoragePath(), filePath)
 
 	short := "Hello"
 	origin := "World"

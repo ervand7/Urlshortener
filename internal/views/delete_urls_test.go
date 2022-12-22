@@ -5,28 +5,29 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
-	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/database"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
 )
 
 func TestUserURLsDelete(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer dbstorage.Downgrade()
+	db := dbstorage.Database{}
 	db.Run()
 	server := Server{
-		Storage: s.NewDBStorage(db),
+		Storage: dbstorage.NewDBStorage(db),
 	}
 
 	shorts := []string{
@@ -69,7 +70,7 @@ func TestUserURLsDelete(t *testing.T) {
 	assert.Equal(t, response.StatusCode, http.StatusAccepted)
 	err = response.Body.Close()
 	assert.NoError(t, err)
-	time.Sleep(s.Timeout * time.Second)
+	time.Sleep(dbstorage.Timeout * time.Second)
 
 	for _, short := range shorts {
 		ctx := context.TODO()

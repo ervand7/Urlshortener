@@ -1,6 +1,9 @@
 package algorithms
 
-import "testing"
+import (
+	"strconv"
+	"testing"
+)
 
 func TestIssubset(t *testing.T) {
 	type args struct {
@@ -36,4 +39,56 @@ func TestIssubset(t *testing.T) {
 			}
 		})
 	}
+}
+
+func BenchmarkIssubset(b *testing.B) {
+	N := 1000
+
+	b.Run("Size 100", func(b *testing.B) {
+		b.ReportAllocs()
+		length := 100
+		first := make([]string, length)
+		second := make([]string, length)
+		for i := 0; i < length; i++ {
+			first = append(first, strconv.Itoa(i))
+			second = append(second, strconv.Itoa(i))
+		}
+
+		b.ResetTimer()
+		for i := 0; i < N; i++ {
+			Issubset(first, second)
+		}
+	})
+
+	b.Run("Size 1_000", func(b *testing.B) {
+		b.ReportAllocs()
+		length := 1_000
+		first := make([]string, length)
+		second := make([]string, length)
+		for i := 0; i < length; i++ {
+			first = append(first, strconv.Itoa(i))
+			second = append(second, strconv.Itoa(i))
+		}
+
+		b.ResetTimer()
+		for i := 0; i < N; i++ {
+			Issubset(first, second)
+		}
+	})
+
+	b.Run("Size 5_000", func(b *testing.B) {
+		b.ReportAllocs()
+		length := 5_000
+		first := make([]string, length)
+		second := make([]string, length)
+		for i := 0; i < length; i++ {
+			first = append(first, strconv.Itoa(i))
+			second = append(second, strconv.Itoa(i))
+		}
+
+		b.ResetTimer()
+		for i := 0; i < N; i++ {
+			Issubset(first, second)
+		}
+	})
 }
