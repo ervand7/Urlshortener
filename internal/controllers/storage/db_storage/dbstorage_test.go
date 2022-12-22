@@ -1,9 +1,8 @@
-package storage
+package db_storage
 
 import (
 	"context"
 	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/database"
 	"github.com/ervand7/urlshortener/internal/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -16,8 +15,8 @@ func TestNewDBStorage(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer Downgrade()
+	db := Database{}
 	db.Run()
 	storage := NewDBStorage(db)
 	assert.Equal(t, storage.db, db)
@@ -29,8 +28,8 @@ func TestDBStorage_Set(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer Downgrade()
+	db := Database{}
 	db.Run()
 	dbStorage := DBStorage{db: db}
 
@@ -70,8 +69,8 @@ func TestDBStorage_SetMany(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer Downgrade()
+	db := Database{}
 	db.Run()
 	dbStorage := DBStorage{db: db}
 
@@ -126,8 +125,8 @@ func TestDBStorage_Get(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer Downgrade()
+	db := Database{}
 	db.Run()
 	dbStorage := DBStorage{db: db}
 
@@ -148,8 +147,8 @@ func TestDBStorage_GetUserURLs(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer Downgrade()
+	db := Database{}
 	db.Run()
 	dbStorage := DBStorage{db: db}
 
@@ -190,8 +189,8 @@ func TestDBStorage_DeleteUserURLs(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer Downgrade()
+	db := Database{}
 	db.Run()
 	dbStorage := NewDBStorage(db)
 

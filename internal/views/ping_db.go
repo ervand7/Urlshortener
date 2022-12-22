@@ -1,7 +1,7 @@
 package views
 
 import (
-	d "github.com/ervand7/urlshortener/internal/database"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/db_storage"
 	"github.com/ervand7/urlshortener/internal/logger"
 	"net/http"
 	"os"
@@ -17,7 +17,7 @@ func (server *Server) PingDB(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	db := d.Database{}
+	db := db_storage.Database{}
 	defer func() {
 		if err = os.Unsetenv("DATABASE_DSN"); err != nil {
 			logger.Logger.Error(err.Error())

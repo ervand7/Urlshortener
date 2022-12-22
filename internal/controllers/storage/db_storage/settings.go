@@ -1,4 +1,4 @@
-package database
+package db_storage
 
 import (
 	"database/sql"
@@ -82,6 +82,6 @@ func (db *Database) setConnPool() {
 func getMigrationsDir() string {
 	_, currentFile, _, _ := runtime.Caller(0)
 	currentDir := filepath.Dir(currentFile)
-	migrationsDir := filepath.Join(currentDir, "/../../migrations")
+	migrationsDir := filepath.Join(currentDir, "/../../../../migrations")
 	return migrationsDir
 }

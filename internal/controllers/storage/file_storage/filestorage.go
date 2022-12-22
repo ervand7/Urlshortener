@@ -1,4 +1,4 @@
-package filestorage
+package file_storage
 
 import (
 	"context"

@@ -1,8 +1,7 @@
-package storage
+package db_storage
 
 import (
 	"context"
-	"github.com/ervand7/urlshortener/internal/database"
 	_errors "github.com/ervand7/urlshortener/internal/errors"
 	"github.com/ervand7/urlshortener/internal/logger"
 	"github.com/ervand7/urlshortener/internal/models"
@@ -30,14 +29,14 @@ const (
 )
 
 type DBStorage struct {
-	db         database.Database
+	db         Database
 	delChan    chan string
 	buf        []string
 	resetTimer bool
 	timer      *time.Timer
 }
 
-func NewDBStorage(db database.Database) *DBStorage {
+func NewDBStorage(db Database) *DBStorage {
 	storage := &DBStorage{
 		db:         db,
 		delChan:    make(chan string),

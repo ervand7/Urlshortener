@@ -6,8 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"github.com/ervand7/urlshortener/internal/config"
-	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/database"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/db_storage"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -22,11 +21,11 @@ func TestUserURLsDelete(t *testing.T) {
 	if os.Getenv("DATABASE_DSN") != config.TestDBAddr {
 		return
 	}
-	defer database.Downgrade()
-	db := database.Database{}
+	defer db_storage.Downgrade()
+	db := db_storage.Database{}
 	db.Run()
 	server := Server{
-		Storage: s.NewDBStorage(db),
+		Storage: db_storage.NewDBStorage(db),
 	}
 
 	shorts := []string{
@@ -69,7 +68,7 @@ func TestUserURLsDelete(t *testing.T) {
 	assert.Equal(t, response.StatusCode, http.StatusAccepted)
 	err = response.Body.Close()
 	assert.NoError(t, err)
-	time.Sleep(s.Timeout * time.Second)
+	time.Sleep(db_storage.Timeout * time.Second)
 
 	for _, short := range shorts {
 		ctx := context.TODO()
