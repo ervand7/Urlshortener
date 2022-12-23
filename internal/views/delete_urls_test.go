@@ -5,16 +5,17 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
-	"github.com/google/uuid"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
+	"github.com/google/uuid"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUserURLsDelete(t *testing.T) {

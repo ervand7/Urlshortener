@@ -3,8 +3,9 @@ package filestorage
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
 	"os"
+
+	"github.com/ervand7/urlshortener/internal/config"
 )
 
 type consumer struct {

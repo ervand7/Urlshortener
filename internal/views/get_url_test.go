@@ -2,6 +2,11 @@ package views
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
 	"github.com/ervand7/urlshortener/internal/config"
 	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
 	s "github.com/ervand7/urlshortener/internal/controllers/storage"
@@ -9,10 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"testing"
 )
 
 func TestGetURL(t *testing.T) {

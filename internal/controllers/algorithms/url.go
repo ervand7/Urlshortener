@@ -1,9 +1,10 @@
 package algorithms
 
 import (
-	"github.com/ervand7/urlshortener/internal/config"
 	"math/rand"
 	"time"
+
+	"github.com/ervand7/urlshortener/internal/config"
 )
 
 func init() {

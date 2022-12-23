@@ -3,12 +3,13 @@ package views
 import (
 	"context"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
-	e "github.com/ervand7/urlshortener/internal/errors"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	e "github.com/ervand7/urlshortener/internal/errors"
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
 // APIShortenURL POST ("/api/shorten")

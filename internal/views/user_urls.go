@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"net/http"
 	"time"
+
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
 // UserURLs GET ("/api/user/urls")

@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"net/http"
 	"time"
+
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
 // UserURLsDelete delete ("/api/user/urls")

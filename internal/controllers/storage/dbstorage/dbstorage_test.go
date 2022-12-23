@@ -2,13 +2,14 @@ package dbstorage
 
 import (
 	"context"
+	"os"
+	"testing"
+	"time"
+
 	"github.com/ervand7/urlshortener/internal/config"
 	"github.com/ervand7/urlshortener/internal/models"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"os"
-	"testing"
-	"time"
 )
 
 func TestNewDBStorage(t *testing.T) {

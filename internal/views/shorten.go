@@ -2,12 +2,13 @@ package views
 
 import (
 	"context"
-	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
-	e "github.com/ervand7/urlshortener/internal/errors"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	e "github.com/ervand7/urlshortener/internal/errors"
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
 // ShortenURL POST ("/")

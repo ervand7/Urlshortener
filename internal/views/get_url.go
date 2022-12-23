@@ -3,11 +3,12 @@ package views
 import (
 	"context"
 	"database/sql"
+	"net/http"
+	"time"
+
 	"github.com/ervand7/urlshortener/internal/config"
 	e "github.com/ervand7/urlshortener/internal/errors"
 	"github.com/ervand7/urlshortener/internal/logger"
-	"net/http"
-	"time"
 )
 
 // GetURL GET ("/{id}")

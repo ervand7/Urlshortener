@@ -2,15 +2,16 @@ package views
 
 import (
 	"bytes"
+	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	s "github.com/ervand7/urlshortener/internal/controllers/storage"
 	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestUserURLs(t *testing.T) {

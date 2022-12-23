@@ -2,11 +2,12 @@ package views
 
 import (
 	"encoding/hex"
+	"net/http"
+	"time"
+
 	"github.com/ervand7/urlshortener/internal/logger"
 	"github.com/ervand7/urlshortener/internal/models"
 	"github.com/google/uuid"
-	"net/http"
-	"time"
 )
 
 const ctxTime time.Duration = 2

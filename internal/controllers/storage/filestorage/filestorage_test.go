@@ -2,10 +2,11 @@ package filestorage
 
 import (
 	"context"
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFileStorage(t *testing.T) {

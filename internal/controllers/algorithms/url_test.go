@@ -1,10 +1,11 @@
 package algorithms
 
 import (
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGenerateShortURL(t *testing.T) {

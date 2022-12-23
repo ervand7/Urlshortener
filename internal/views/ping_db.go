@@ -1,10 +1,11 @@
 package views
 
 import (
-	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"net/http"
 	"os"
+
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
 // PingDB GET ("/ping")

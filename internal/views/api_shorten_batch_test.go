@@ -3,16 +3,17 @@ package views
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAPIShortenBatch(t *testing.T) {

@@ -1,9 +1,10 @@
 package server
 
 import (
-	"github.com/ervand7/urlshortener/internal/config"
 	"log"
 	"net/http"
+
+	"github.com/ervand7/urlshortener/internal/config"
 )
 
 func Run() {
