@@ -13,9 +13,8 @@ func init() {
 
 const ShortenEndpointLen int = 5
 
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
 func GenerateShortURL() string {
+	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	result := make([]rune, ShortenEndpointLen)
 	for i := range result {
 		randIndex := rand.Intn(len(letterRunes))

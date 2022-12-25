@@ -2,9 +2,13 @@ package algorithms
 
 // Issubset checks whether first contains second
 func Issubset(first, second []string) bool {
-	hash := make(map[string]bool, len(first))
+	if len(second) > len(first) {
+		return false
+	}
+
+	hash := make(map[string]struct{}, len(first))
 	for _, i := range first {
-		hash[i] = true
+		hash[i] = struct{}{}
 	}
 	for _, i := range second {
 		if _, ok := hash[i]; !ok {
