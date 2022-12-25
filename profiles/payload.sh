@@ -1,6 +1,6 @@
 #! /bin/bash
 
-COUNT=200
+COUNT=1000
 
 make_requests() {
   rand_str=$(openssl rand -hex 20)

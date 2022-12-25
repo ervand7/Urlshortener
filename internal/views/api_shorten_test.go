@@ -18,7 +18,7 @@ import (
 )
 
 func TestAPIShortenURL(t *testing.T) {
-	lenResultURL := len(config.GetConfig().BaseURL) +
+	lenResultURL := len(config.GetBaseURL()) +
 		len("/") +
 		algorithms.ShortenEndpointLen
 	const Endpoint string = "/api/shorten"

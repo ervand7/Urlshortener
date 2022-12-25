@@ -10,9 +10,9 @@ import (
 
 func TestGenerateShortURL(t *testing.T) {
 	result := GenerateShortURL()
-	assert.Contains(t, result, config.GetConfig().BaseURL)
+	assert.Contains(t, result, config.GetBaseURL())
 	assert.Len(t, result,
-		len(config.GetConfig().BaseURL)+len("/")+ShortenEndpointLen,
+		len(config.GetBaseURL())+len("/")+ShortenEndpointLen,
 	)
 }
 

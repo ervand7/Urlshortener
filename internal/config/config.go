@@ -16,6 +16,13 @@ var (
 	databaseDSNFlag     *string
 )
 
+var (
+	serverAddress   string
+	baseURL         string
+	fileStoragePath string
+	databaseDSN     string
+)
+
 func init() {
 	servAddrFlag = flag.String("a", "", "Server address")
 	baseURLFlag = flag.String("b", "", "Base shorten url")
@@ -30,7 +37,39 @@ type Config struct {
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 }
 
-func GetConfig() Config {
+func GetServerAddress() string {
+	if serverAddress != "" {
+		return serverAddress
+	}
+	serverAddress = getConfig().ServerAddress
+	return serverAddress
+}
+
+func GetBaseURL() string {
+	if baseURL != "" {
+		return baseURL
+	}
+	baseURL = getConfig().BaseURL
+	return baseURL
+}
+
+func GetFileStoragePath() string {
+	if fileStoragePath != "" {
+		return fileStoragePath
+	}
+	fileStoragePath = getConfig().FileStoragePath
+	return fileStoragePath
+}
+
+func GetDatabaseDSN() string {
+	if databaseDSN != "" {
+		return databaseDSN
+	}
+	databaseDSN = getConfig().DatabaseDSN
+	return databaseDSN
+}
+
+func getConfig() Config {
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {

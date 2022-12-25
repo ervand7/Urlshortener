@@ -36,7 +36,7 @@ func (db *Database) Run() {
 }
 
 func (db *Database) ConnStart() (err error) {
-	conn, err := goose.OpenDBWithDriver("pgx", config.GetConfig().DatabaseDSN)
+	conn, err := goose.OpenDBWithDriver("pgx", config.GetDatabaseDSN())
 	if err != nil {
 		return err
 	}

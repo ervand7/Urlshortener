@@ -9,13 +9,13 @@ import (
 )
 
 func GetStorage() (storage models.Storage) {
-	if config.GetConfig().DatabaseDSN != "" {
+	if config.GetDatabaseDSN() != "" {
 		db := dbstorage.Database{}
 		db.Run()
 		storage = dbstorage.NewDBStorage(db)
 		return storage
 	}
-	if config.GetConfig().FileStoragePath != "" {
+	if config.GetFileStoragePath() != "" {
 		storage = &f.FileStorage{}
 		return storage
 	}

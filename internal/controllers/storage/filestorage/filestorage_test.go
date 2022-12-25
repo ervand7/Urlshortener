@@ -20,7 +20,7 @@ func TestFileStorage(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 	os.Args = []string{"test", "-f", filePath}
-	assert.Equal(t, config.GetConfig().FileStoragePath, filePath)
+	assert.Equal(t, config.GetFileStoragePath(), filePath)
 
 	short := "Hello"
 	origin := "World"

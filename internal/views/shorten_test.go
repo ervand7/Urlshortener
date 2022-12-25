@@ -18,7 +18,7 @@ import (
 )
 
 func TestShortenURL(t *testing.T) {
-	lenRespBody := len(config.GetConfig().BaseURL) +
+	lenRespBody := len(config.GetBaseURL()) +
 		len("/") +
 		algorithms.ShortenEndpointLen
 

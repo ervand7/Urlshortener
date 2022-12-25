@@ -11,7 +11,7 @@ func Run() {
 	router := newRouter()
 	log.Fatal(
 		http.ListenAndServe(
-			config.GetConfig().ServerAddress,
+			config.GetServerAddress(),
 			router,
 		),
 	)

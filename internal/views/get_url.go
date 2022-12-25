@@ -14,7 +14,7 @@ import (
 // GetURL GET ("/{id}")
 func (server *Server) GetURL(w http.ResponseWriter, r *http.Request) {
 	endpoint := r.URL.Path
-	short := config.GetConfig().BaseURL + endpoint
+	short := config.GetBaseURL() + endpoint
 
 	ctx, cancel := context.WithTimeout(r.Context(), ctxTime*time.Second)
 	defer cancel()

@@ -7,11 +7,11 @@ import (
 	"github.com/ervand7/urlshortener/internal/config"
 )
 
+const ShortenEndpointLen int = 5
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
 }
-
-const ShortenEndpointLen int = 5
 
 func GenerateShortURL() string {
 	var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -20,13 +20,14 @@ func GenerateShortURL() string {
 		randIndex := rand.Intn(len(letterRunes))
 		result[i] = letterRunes[randIndex]
 	}
-	return config.GetConfig().BaseURL + "/" + string(result)
+	return config.GetBaseURL() + "/" + string(result)
 }
 
 func MakeURLsFromEndpoints(arr []string) {
+	baseURL := config.GetBaseURL() + "/"
 	for index, val := range arr {
 		if len(val) == ShortenEndpointLen {
-			arr[index] = config.GetConfig().BaseURL + "/" + val
+			arr[index] = baseURL + val
 		}
 	}
 }
