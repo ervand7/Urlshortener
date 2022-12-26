@@ -18,10 +18,10 @@ var (
 )
 
 var (
-	serverAddress   string
-	baseURL         string
-	fileStoragePath string
-	databaseDSN     string
+	cacheServerAddress   string
+	cacheBaseURL         string
+	cacheFileStoragePath string
+	cacheDatabaseDSN     string
 )
 
 func init() {
@@ -64,36 +64,36 @@ func getConfig() config {
 
 // GetServerAddress gets serverAddress by cache
 func GetServerAddress() string {
-	if serverAddress != "" {
-		return serverAddress
+	if cacheServerAddress != "" {
+		return cacheServerAddress
 	}
-	serverAddress = getConfig().ServerAddress
-	return serverAddress
+	cacheServerAddress = getConfig().ServerAddress
+	return cacheServerAddress
 }
 
 // GetBaseURL gets baseURL by cache
 func GetBaseURL() string {
-	if baseURL != "" {
-		return baseURL
+	if cacheBaseURL != "" {
+		return cacheBaseURL
 	}
-	baseURL = getConfig().BaseURL
-	return baseURL
+	cacheBaseURL = getConfig().BaseURL
+	return cacheBaseURL
 }
 
 // GetFileStoragePath gets fileStoragePath by cache
 func GetFileStoragePath() string {
-	if fileStoragePath != "" {
-		return fileStoragePath
+	if cacheFileStoragePath != "" {
+		return cacheFileStoragePath
 	}
-	fileStoragePath = getConfig().FileStoragePath
-	return fileStoragePath
+	cacheFileStoragePath = getConfig().FileStoragePath
+	return cacheFileStoragePath
 }
 
 // GetDatabaseDSN gets databaseDSN by cache
 func GetDatabaseDSN() string {
-	if databaseDSN != "" {
-		return databaseDSN
+	if cacheDatabaseDSN != "" {
+		return cacheDatabaseDSN
 	}
-	databaseDSN = getConfig().DatabaseDSN
-	return databaseDSN
+	cacheDatabaseDSN = getConfig().DatabaseDSN
+	return cacheDatabaseDSN
 }
