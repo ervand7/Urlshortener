@@ -1,0 +1,2 @@
+// Package algorithms
+package algorithms
