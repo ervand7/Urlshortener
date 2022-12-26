@@ -1,3 +1,4 @@
+// Package config - app configuration.
 package config
 
 import (
@@ -30,47 +31,15 @@ func init() {
 	databaseDSNFlag = flag.String("d", "", "Database source name")
 }
 
-type Config struct {
+type config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS" envDefault:":8080"`
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 	DatabaseDSN     string `env:"DATABASE_DSN"`
 }
 
-func GetServerAddress() string {
-	if serverAddress != "" {
-		return serverAddress
-	}
-	serverAddress = getConfig().ServerAddress
-	return serverAddress
-}
-
-func GetBaseURL() string {
-	if baseURL != "" {
-		return baseURL
-	}
-	baseURL = getConfig().BaseURL
-	return baseURL
-}
-
-func GetFileStoragePath() string {
-	if fileStoragePath != "" {
-		return fileStoragePath
-	}
-	fileStoragePath = getConfig().FileStoragePath
-	return fileStoragePath
-}
-
-func GetDatabaseDSN() string {
-	if databaseDSN != "" {
-		return databaseDSN
-	}
-	databaseDSN = getConfig().DatabaseDSN
-	return databaseDSN
-}
-
-func getConfig() Config {
-	var cfg Config
+func getConfig() config {
+	var cfg config
 	err := env.Parse(&cfg)
 	if err != nil {
 		logger.Logger.Fatal(err.Error())
@@ -91,4 +60,40 @@ func getConfig() Config {
 	}
 
 	return cfg
+}
+
+// GetServerAddress gets serverAddress by cache
+func GetServerAddress() string {
+	if serverAddress != "" {
+		return serverAddress
+	}
+	serverAddress = getConfig().ServerAddress
+	return serverAddress
+}
+
+// GetBaseURL gets baseURL by cache
+func GetBaseURL() string {
+	if baseURL != "" {
+		return baseURL
+	}
+	baseURL = getConfig().BaseURL
+	return baseURL
+}
+
+// GetFileStoragePath gets fileStoragePath by cache
+func GetFileStoragePath() string {
+	if fileStoragePath != "" {
+		return fileStoragePath
+	}
+	fileStoragePath = getConfig().FileStoragePath
+	return fileStoragePath
+}
+
+// GetDatabaseDSN gets databaseDSN by cache
+func GetDatabaseDSN() string {
+	if databaseDSN != "" {
+		return databaseDSN
+	}
+	databaseDSN = getConfig().DatabaseDSN
+	return databaseDSN
 }
