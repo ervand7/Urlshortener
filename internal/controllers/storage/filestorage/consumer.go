@@ -3,8 +3,9 @@ package filestorage
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/config"
 	"os"
+
+	"github.com/ervand7/urlshortener/internal/config"
 )
 
 type consumer struct {
@@ -12,7 +13,7 @@ type consumer struct {
 	scanner *bufio.Scanner
 }
 
-func (c *consumer) ReadEvent() (map[string]string, error) {
+func (c *consumer) readEvent() (map[string]string, error) {
 	if !c.scanner.Scan() {
 		return nil, c.scanner.Err()
 	}
@@ -26,12 +27,12 @@ func (c *consumer) ReadEvent() (map[string]string, error) {
 	return urlMap, nil
 }
 
-func (c *consumer) Close() error {
+func (c *consumer) close() error {
 	return c.file.Close()
 }
 
 func newConsumer() (*consumer, error) {
-	filename := config.GetConfig().FileStoragePath
+	filename := config.GetFileStoragePath()
 	file, err := os.OpenFile(filename, os.O_RDONLY|os.O_CREATE, 0777)
 	if err != nil {
 		return nil, err

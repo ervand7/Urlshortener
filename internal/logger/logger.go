@@ -1,12 +1,14 @@
 package logger
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"log"
 	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
+// zap.Logger settings.
 var (
 	Logger       *zap.Logger
 	logInitError error
@@ -19,13 +21,14 @@ func init() {
 	}
 }
 
+// New logger constructor.
 func New(level string) (*zap.Logger, error) {
 	cfg := zap.NewProductionConfig()
 
-	// set log minimum level
+	// set log minimum level.
 	cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
 
-	// set app log level
+	// set app log level.
 	atom := zap.NewAtomicLevel()
 	err := atom.UnmarshalText([]byte(level))
 	if err != nil {
@@ -33,11 +36,11 @@ func New(level string) (*zap.Logger, error) {
 	}
 	cfg.Level = atom
 
-	// set output
+	// set output.
 	cfg.OutputPaths = []string{"stdout"}
 	cfg.DisableStacktrace = true
 
-	// set log time mapping
+	// set log time mapping.
 	cfg.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(t.Format(time.StampNano))
 	}

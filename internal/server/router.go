@@ -1,10 +1,11 @@
 package server
 
 import (
-	"github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/views"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+
+	"github.com/ervand7/urlshortener/internal/controllers/storage"
+	"github.com/ervand7/urlshortener/internal/views"
 )
 
 func newRouter() chi.Router {

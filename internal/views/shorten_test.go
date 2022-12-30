@@ -2,24 +2,26 @@ package views
 
 import (
 	"bytes"
-	"github.com/ervand7/urlshortener/internal/config"
-	"github.com/ervand7/urlshortener/internal/controllers/generatedata"
-	s "github.com/ervand7/urlshortener/internal/controllers/storage"
-	"github.com/ervand7/urlshortener/internal/database"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/ervand7/urlshortener/internal/config"
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	s "github.com/ervand7/urlshortener/internal/controllers/storage"
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
 )
 
 func TestShortenURL(t *testing.T) {
-	lenRespBody := len(config.GetConfig().BaseURL) +
+	lenRespBody := len(config.GetBaseURL()) +
 		len("/") +
-		generatedata.ShortenEndpointLen
+		algorithms.ShortenEndpointLen
 
 	type want struct {
 		contentType string
@@ -77,9 +79,8 @@ func TestShortenURL(t *testing.T) {
 				Storage: s.GetStorage(),
 			}
 			defer func() {
-				switch server.Storage.(type) {
-				case *s.DBStorage:
-					database.Downgrade()
+				if _, ok := server.Storage.(*dbstorage.DBStorage); ok {
+					dbstorage.Downgrade()
 				}
 			}()
 
@@ -92,7 +93,7 @@ func TestShortenURL(t *testing.T) {
 			assert.Equal(t, tt.want.statusCode, response.StatusCode)
 			assert.Equal(t, tt.want.contentType, response.Header.Get("Content-Type"))
 
-			responseBody, err := ioutil.ReadAll(response.Body)
+			responseBody, err := io.ReadAll(response.Body)
 			assert.Equal(t, tt.want.lenRespBody, len(responseBody))
 			require.NoError(t, err)
 			err = response.Body.Close()
@@ -146,11 +147,11 @@ func TestShortenURL409(t *testing.T) {
 				bytes.NewBuffer(body),
 			)
 
-			defer database.Downgrade()
-			db := database.Database{}
+			defer dbstorage.Downgrade()
+			db := dbstorage.Database{}
 			db.Run()
 			server := Server{
-				Storage: s.NewDBStorage(db),
+				Storage: dbstorage.NewDBStorage(db),
 			}
 
 			var handler func(w http.ResponseWriter, r *http.Request)

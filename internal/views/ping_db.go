@@ -1,13 +1,14 @@
 package views
 
 import (
-	d "github.com/ervand7/urlshortener/internal/database"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"net/http"
 	"os"
+
+	"github.com/ervand7/urlshortener/internal/controllers/storage/dbstorage"
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
-// PingDB GET ("/ping")
+// PingDB GET ("/ping").
 func (server *Server) PingDB(w http.ResponseWriter, _ *http.Request) {
 	dsn := "user=ervand password=ervand dbname=urlshortener host=localhost port=5432 sslmode=disable"
 	err := os.Setenv("DATABASE_DSN", dsn)
@@ -17,7 +18,7 @@ func (server *Server) PingDB(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	db := d.Database{}
+	db := dbstorage.Database{}
 	defer func() {
 		if err = os.Unsetenv("DATABASE_DSN"); err != nil {
 			logger.Logger.Error(err.Error())

@@ -3,15 +3,18 @@ package filestorage
 import (
 	"context"
 	"errors"
+	"sync"
+
 	"github.com/ervand7/urlshortener/internal/logger"
 	"github.com/ervand7/urlshortener/internal/models"
-	"sync"
 )
 
+// FileStorage implementation of Storage interface for working with files.
 type FileStorage struct {
 	Mutex sync.Mutex
 }
 
+// Set write one entity.
 func (f *FileStorage) Set(
 	_ context.Context, _ string, short, origin string,
 ) error {
@@ -22,19 +25,20 @@ func (f *FileStorage) Set(
 		return err
 	}
 	defer func() {
-		if err = producer.Close(); err != nil {
+		if err = producer.close(); err != nil {
 			logger.Logger.Warn(err.Error())
 		}
 	}()
 
 	urlMap := make(map[string]string, 0)
 	urlMap[short] = origin
-	if err = producer.WriteEvent(urlMap); err != nil {
+	if err = producer.writeEvent(urlMap); err != nil {
 		return err
 	}
 	return nil
 }
 
+// Get one entity.
 func (f *FileStorage) Get(
 	_ context.Context, short string,
 ) (origin string, err error) {
@@ -45,12 +49,12 @@ func (f *FileStorage) Get(
 		return "", err
 	}
 	defer func() {
-		if err = consumer.Close(); err != nil {
+		if err = consumer.close(); err != nil {
 			logger.Logger.Warn(err.Error())
 		}
 	}()
 
-	urlMap, readEventErr := consumer.ReadEvent()
+	urlMap, readEventErr := consumer.readEvent()
 	if readEventErr != nil {
 		return "", readEventErr
 	}
@@ -61,12 +65,7 @@ func (f *FileStorage) Get(
 	return origin, nil
 }
 
-func (f *FileStorage) SetMany(_ context.Context, _ []models.Entry) error {
-	err := errors.New("not implemented")
-	logger.Logger.Error(err.Error())
-	return err
-}
-
+// GetUserURLs gets all user urls from file
 func (f *FileStorage) GetUserURLs(
 	_ context.Context, _ string,
 ) (result []map[string]string, err error) {
@@ -75,6 +74,14 @@ func (f *FileStorage) GetUserURLs(
 	return nil, err
 }
 
+// SetMany batch write
+func (f *FileStorage) SetMany(_ context.Context, _ []models.Entry) error {
+	err := errors.New("not implemented")
+	logger.Logger.Error(err.Error())
+	return err
+}
+
+// DeleteUserURLs batch delete
 func (f *FileStorage) DeleteUserURLs(_ []string) {
 	err := errors.New("not implemented")
 	logger.Logger.Error(err.Error())

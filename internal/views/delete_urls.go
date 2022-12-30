@@ -4,13 +4,14 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
-	"github.com/ervand7/urlshortener/internal/logger"
 	"net/http"
 	"time"
+
+	"github.com/ervand7/urlshortener/internal/controllers/algorithms"
+	"github.com/ervand7/urlshortener/internal/logger"
 )
 
-// UserURLsDelete delete ("/api/user/urls")
+// UserURLsDelete delete ("/api/user/urls").
 func (server *Server) UserURLsDelete(w http.ResponseWriter, r *http.Request) {
 	defer server.CloseBody(r)
 	userID, err := r.Cookie("userID")
@@ -51,7 +52,7 @@ func (server *Server) UserURLsDelete(w http.ResponseWriter, r *http.Request) {
 		logger.Logger.Warn("user can delete only his own urls")
 	}
 
-	algorithms.PrepareShortened(urlsFromRequest)
+	algorithms.MakeURLsFromEndpoints(urlsFromRequest)
 	go func() {
 		server.Storage.DeleteUserURLs(urlsFromRequest)
 	}()
