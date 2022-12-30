@@ -1,3 +1,4 @@
+// Package logger - custom zap.Logger.
 package logger
 
 import (
