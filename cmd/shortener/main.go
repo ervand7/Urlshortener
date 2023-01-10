@@ -1,4 +1,5 @@
 // Package main is an entry point to the program.
+// check CI-test
 // Run example:
 // $ go build -ldflags="-X 'main.buildVersion=v1.0.0' -X 'main.buildDate=$(date +'%Y/%m/%d %H:%M:%S')'" -o shortener && ./shortener
 package main
