@@ -1,3 +1,4 @@
+// Package errors - custom errors.
 package errors
 
 import (
