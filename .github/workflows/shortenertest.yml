@@ -417,7 +417,7 @@ jobs:
           github.head_ref == 'iter23' ||
           github.head_ref == 'iter24'
         run: |
-          shortenertest -test.v -test.run=^TestIteration14/TestDeleteConcurrent$ \
+          shortenertest -test.v -test.run=^TestIteration14/TestDeleteConcurrent$  \
               -binary-path=cmd/shortener/shortener \
               -database-dsn='postgres://postgres:postgres@postgres:5432/praktikum?sslmode=disable'
 
