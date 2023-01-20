@@ -1,0 +1,7 @@
+{
+  "enable_https": "false",
+  "server_address": ":5050",
+  "base_url": "http://localhost:5050",
+  "file_storage_path": "",
+  "database_dsn": "user=ervand password=ervand dbname=urlshortener_test host=localhost port=5432 sslmode=disable"
+}
