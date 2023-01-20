@@ -63,3 +63,38 @@ func TestGetConfigFlagPriority(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, getConfig().FileStoragePath, FileStoragePathFlag)
 }
+
+func TestGetEnableHTTPS(t *testing.T) {
+	value := "hello"
+	cacheEnableHTTPS = value
+	assert.Equal(t, value, cacheEnableHTTPS)
+	assert.Equal(t, value, GetEnableHTTPS())
+}
+
+func TestGetServerAddress(t *testing.T) {
+	value := "hello"
+	cacheServerAddress = value
+	assert.Equal(t, value, cacheServerAddress)
+	assert.Equal(t, value, GetServerAddress())
+}
+
+func TestGetBaseURL(t *testing.T) {
+	value := "hello"
+	cacheBaseURL = value
+	assert.Equal(t, value, cacheBaseURL)
+	assert.Equal(t, value, GetBaseURL())
+}
+
+func TestGetFileStoragePath(t *testing.T) {
+	value := "hello"
+	cacheFileStoragePath = value
+	assert.Equal(t, value, cacheFileStoragePath)
+	assert.Equal(t, value, GetFileStoragePath())
+}
+
+func TestGetDatabaseDSN(t *testing.T) {
+	value := "hello"
+	cacheDatabaseDSN = value
+	assert.Equal(t, value, cacheDatabaseDSN)
+	assert.Equal(t, value, GetDatabaseDSN())
+}
