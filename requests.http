@@ -52,3 +52,7 @@ Content-Type: application/json
   "http://localhost:8080/LaGeD",
   "http://localhost:8080/PWPpe"
 ]
+
+###
+GET http://localhost:8080/api/internal/stats
+X-Real-IP: 192.168.1.0

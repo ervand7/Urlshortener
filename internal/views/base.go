@@ -1,11 +1,13 @@
 package views
 
 import (
+	"context"
 	"encoding/hex"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/ervand7/urlshortener/internal/logger"
 	"github.com/ervand7/urlshortener/internal/models"
@@ -41,9 +43,38 @@ func (server Server) GetOrCreateUserIDFromCookie(
 	return userID
 }
 
-func (server Server) setCookie(encodedUserID string, w http.ResponseWriter) {
-	cookie := &http.Cookie{Name: "userID", Value: encodedUserID, HttpOnly: true}
-	http.SetCookie(w, cookie)
+// GetStats get statistic of shortened urls.
+func (server Server) GetStats(ctx context.Context) (models.Stats, error) {
+	var numberOfURLs, numberOfUsers int
+	grp, ctx := errgroup.WithContext(ctx)
+
+	grp.Go(func() error {
+		res, err := server.Storage.GetNumberOfURLs(ctx)
+		if err != nil {
+			logger.Logger.Error(err.Error())
+			return err
+		}
+		numberOfURLs = res
+		return nil
+	})
+
+	grp.Go(func() error {
+		res, err := server.Storage.GetNumberOfUsers(ctx)
+		if err != nil {
+			logger.Logger.Error(err.Error())
+			return err
+		}
+		numberOfUsers = res
+		return nil
+	})
+
+	if err := grp.Wait(); err != nil {
+		return models.Stats{}, err
+	}
+	return models.Stats{
+		NumberOfURLs:  numberOfURLs,
+		NumberOfUsers: numberOfUsers,
+	}, nil
 }
 
 // Write writes resp data.
@@ -60,4 +91,9 @@ func (server Server) CloseBody(r *http.Request) {
 	if err != nil {
 		logger.Logger.Warn(err.Error())
 	}
+}
+
+func (server Server) setCookie(encodedUserID string, w http.ResponseWriter) {
+	cookie := &http.Cookie{Name: "userID", Value: encodedUserID, HttpOnly: true}
+	http.SetCookie(w, cookie)
 }

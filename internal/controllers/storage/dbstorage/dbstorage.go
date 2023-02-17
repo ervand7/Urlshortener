@@ -173,6 +173,28 @@ func (d *DBStorage) DeleteUserURLs(shortUrls []string) {
 	}
 }
 
+// GetNumberOfURLs - get count of shortened urls
+func (d *DBStorage) GetNumberOfURLs(ctx context.Context) (int, error) {
+	var numberOfURLs int
+	row := d.db.Conn.QueryRowContext(ctx, "select count(short) from url")
+	err := row.Scan(&numberOfURLs)
+	if err != nil {
+		return 0, err
+	}
+	return numberOfURLs, nil
+}
+
+// GetNumberOfUsers - get count of unique users
+func (d *DBStorage) GetNumberOfUsers(ctx context.Context) (int, error) {
+	var numberOfUsers int
+	row := d.db.Conn.QueryRowContext(ctx, "select count(distinct user_id) from url")
+	err := row.Scan(&numberOfUsers)
+	if err != nil {
+		return 0, err
+	}
+	return numberOfUsers, nil
+}
+
 func (d *DBStorage) startWorker() {
 	ctx := context.Background()
 	for {

@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 
 	"github.com/ervand7/urlshortener/internal/controllers/storage"
+	"github.com/ervand7/urlshortener/internal/server/middlewares"
 	"github.com/ervand7/urlshortener/internal/views"
 )
 
@@ -14,7 +15,8 @@ func newRouter() chi.Router {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(GzipMiddleware)
+	r.Use(middlewares.GzipMiddleware)
+	// r.Use(middlewares.NewTrustedNetwork().Handler)
 
 	server := views.Server{
 		Storage: storage.GetStorage(),
@@ -28,7 +30,12 @@ func newRouter() chi.Router {
 		r.Post("/api/shorten/batch", server.APIShortenBatch)
 		r.Delete("/api/user/urls", server.UserURLsDelete)
 		r.Get("/ping", server.PingDB)
+		// r.Get("/api/internal/stats", server.Stats)
 	})
+
+	StatsGroup := r.Group(nil)
+	StatsGroup.Use(middlewares.NewTrustedNetwork().Handler)
+	StatsGroup.Post("/api/internal/stats", server.Stats)
 
 	return r
 }
