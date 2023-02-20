@@ -76,3 +76,17 @@ func (m *MemoryStorage) DeleteUserURLs(_ []string) {
 	err := errors.New("not implemented")
 	logger.Logger.Error(err.Error())
 }
+
+// GetNumberOfURLs - get count of shortened urls
+func (m *MemoryStorage) GetNumberOfURLs(ctx context.Context) (int, error) {
+	err := errors.New("not implemented")
+	logger.Logger.Error(err.Error())
+	return 0, err
+}
+
+// GetNumberOfUsers - get count of unique users
+func (m *MemoryStorage) GetNumberOfUsers(ctx context.Context) (int, error) {
+	err := errors.New("not implemented")
+	logger.Logger.Error(err.Error())
+	return 0, err
+}

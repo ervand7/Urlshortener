@@ -12,6 +12,12 @@ type Entry struct {
 	Origin string
 }
 
+// Stats struct for gathering result of GetNumberOfURLs and GetNumberOfUsers.
+type Stats struct {
+	NumberOfURLs  int `json:"urls"`
+	NumberOfUsers int `json:"users"`
+}
+
 // Storage interface for working with storage.
 type Storage interface {
 	Set(ctx context.Context, userID, short, origin string) error
@@ -19,4 +25,6 @@ type Storage interface {
 	Get(ctx context.Context, short string) (origin string, err error)
 	GetUserURLs(ctx context.Context, userID string) (result []map[string]string, err error)
 	DeleteUserURLs(shortUrls []string)
+	GetNumberOfURLs(ctx context.Context) (int, error)
+	GetNumberOfUsers(ctx context.Context) (int, error)
 }

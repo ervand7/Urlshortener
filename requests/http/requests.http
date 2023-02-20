@@ -1,0 +1,58 @@
+POST http://localhost:8080
+Content-Type: text/plain; charset=utf-8
+
+"https://practicum.yandex.ru/learn/go-advanced/courses/14d6ff29-c8b6-43bf-9c55-12e8fe25b1b0/sprints/39172/topics/add19e4a-79bf-416e-9d13-0df2005ec81e/lessons/74ebe51b-de58-4142-83b7-3d21ba695a9f/"
+
+###
+POST http://localhost:8080/api/shorten
+Content-Type: application/json
+
+{
+  "url": "https://practicum.yandex.ru/learn/go-advanced/courses/14d6ff29-c8b6-43bf-9c55-12e8fe25b1b0/sprints/39172/topics/add19e4a-79bf-416e-9d13-0df2005ec81e/lessons/74ebe51b-de58-4142-83b7-3d21ba695a9f/"
+}
+
+###
+POST http://localhost:8080/api/shorten/batch
+Content-Type: application/json
+
+[
+  {
+    "correlation_id": "799eb140-c1f8-45c4-8268-656c5b20595b",
+    "original_url": "https://practicum.yandex.ru/learn/go-advanced/courses/14d6ff29-c8b6-43bf-9c55-12e8fe25b1b0/sprints/39172/topics/add19e4a-79bf-416e-9d13-0df2005ec81e/lessons/74ebe51b-de58-4142-83b7-3d21ba695a9f/"
+  },
+  {
+    "correlation_id": "6dde456c-1777-40f5-9f8c-8f6ea6454715",
+    "original_url": "https://practicum/799eb140-c1f8-45c4-8268-656c5b20595bb6-43bf-9c55-12e8fe25b1b0/sprints/39172/656c5b20595bb6-43bf-9c55-12e8fe81e/lessons/74ebe51b-de58-4142-83b7-3d2-656c5b20595bb6-43bf-1ba695a9f/"
+  }
+]
+
+###
+GET http://localhost:8080/pVbor
+
+###
+GET http://localhost:8080/api/user/urls
+
+###
+GET http://localhost:8080/ping
+
+###
+DELETE http://localhost:8080/api/user/urls
+Content-Type: application/json
+
+[
+  "http://localhost:8080/UPfTE",
+  "http://localhost:8080/gucuZ",
+  "http://localhost:8080/HLequ",
+  "http://localhost:8080/jQifa",
+  "http://localhost:8080/YumgX",
+  "http://localhost:8080/QJxfm",
+  "http://localhost:8080/PkKmO",
+  "http://localhost:8080/JAwJg",
+  "http://localhost:8080/eZmrJ",
+  "http://localhost:8080/LaGeD",
+  "http://localhost:8080/PWPpe"
+]
+
+###
+POST http://localhost:8080/api/internal/stats
+X-Real-IP: 192.168.1.0
