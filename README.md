@@ -1,1 +1,3 @@
-Service for shortening urls. Can work simultaneously on HTTP and gRPC. Wrote using patterns publisher-consumer and MVC. Based on union interface data can be stored in DB, file or operate memory. Stack: REST API, gRPC, TLS, Go multithreading, Chi, Goose, Bash, Github Actions.
+Service for shortening urls. Can work simultaneously on HTTP and gRPC. Wrote using patterns publisher-consumer and MVC. Based on union interface data can be stored in DB, file or operate memory. Stack: REST API, gRPC, TLS, Go multithreading, Chi, Goose, Bash, Github Actions. 
+
+It is possible to support TLS. The project has been optimized for performance: the code contains profiling results and benchmark tests. There is documentation, the ability to generate godoc and example tests. The project is covered by 70% unit tests. It is possible to control the launch of the project through the build and compilation flags.
