@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package shortener;
+
+option go_package = "grpc/proto";
+
+message ShortenURLRequest {
+  string originURL = 1;
+}
+
+message ShortenURLResponse {
+  string shortenURL = 1;
+  int32 status = 2;
+}
+
+message ShortenBatchRequest {
+  repeated ShortenBatchRequestItem items = 1;
+}
+
+message ShortenBatchResponse {
+  repeated ShortenBatchResponseItem items = 1;
+  int32 status = 2;
+}
+
+message GetURLRequest {
+  string shortURL = 1;
+}
+
+message GetURLResponse {
+  string originURL = 1;
+  int32 status = 2;
+}
+
+message UserURLsRequest{}
+
+message UserURLsResponse {
+  repeated UserURLsResponseItem items = 1;
+}
+
+message UserURLsDeleteRequest {
+  repeated string URLs = 1;
+}
+
+message UserURLsDeleteResponse {
+  int32 status = 1;
+}
+
+message PingDBRequest {}
+
+message PingDBResponse {
+  int32 status = 1;
+}
+
+message GetStatsRequest{}
+
+message GetStatsResponse {
+  int64 urls = 1;
+  int64 users = 2;
+}
+
+
+message UserURLsResponseItem {
+  string originalURL = 1;
+  string shortURL = 2;
+}
+
+message ShortenBatchRequestItem {
+  string correlationId = 1;
+  string originalURL = 2;
+}
+
+message ShortenBatchResponseItem {
+  string correlationId = 1;
+  string shortURL = 2;
+}
+
+service Shortener {
+  rpc ShortenURL(ShortenURLRequest) returns (ShortenURLResponse);
+  rpc ShortenBatch(ShortenBatchRequest) returns (ShortenBatchResponse);
+  rpc GetURL(GetURLRequest) returns (GetURLResponse);
+  rpc UserURLs(UserURLsRequest) returns (UserURLsResponse);
+  rpc UserURLsDelete(UserURLsDeleteRequest) returns (UserURLsDeleteResponse);
+  rpc PingDB(PingDBRequest) returns (PingDBResponse);
+  rpc GetStats(GetStatsRequest) returns (GetStatsResponse);
+}

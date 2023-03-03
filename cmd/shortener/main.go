@@ -4,10 +4,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"google.golang.org/grpc"
 
 	"github.com/ervand7/urlshortener/internal/logger"
-	"github.com/ervand7/urlshortener/internal/server"
+	g "github.com/ervand7/urlshortener/internal/server/grpc"
+	h "github.com/ervand7/urlshortener/internal/server/http"
 )
 
 var (
@@ -16,10 +25,36 @@ var (
 	buildCommit  = "N/A"
 )
 
-func main() {
+func logBuildInfo() {
 	logger.Logger.Info(fmt.Sprintf("Build version: %s", buildVersion))
 	logger.Logger.Info(fmt.Sprintf("Build date: %s", buildDate))
 	logger.Logger.Info(fmt.Sprintf("Build commit: %s", buildCommit))
-	logger.Logger.Info("server started")
-	server.Run()
+}
+
+func shutdownGraceful(httpRunner *http.Server, grpcRunner *grpc.Server) {
+	logger.Logger.Info("Server shutdown gracefully")
+	time.Sleep(time.Second)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := httpRunner.Shutdown(ctx); err != nil {
+		logger.Logger.Fatal(err.Error())
+	}
+	grpcRunner.Stop()
+}
+
+func main() {
+	logBuildInfo()
+	termChan := make(chan os.Signal, 1)
+	signal.Notify(termChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+
+	httpServer := h.GetServer()
+	go h.Run(httpServer)
+
+	grpcServer := g.GetServer()
+	go g.Run(grpcServer)
+
+	<-termChan
+	shutdownGraceful(httpServer, grpcServer)
 }

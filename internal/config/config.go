@@ -21,6 +21,7 @@ var (
 	fileStoragePathFlag *string
 	databaseDSNFlag     *string
 	configFilePath      *string
+	trustedSubnetFlag   *string
 )
 
 var (
@@ -29,6 +30,7 @@ var (
 	cacheBaseURL         string
 	cacheFileStoragePath string
 	cacheDatabaseDSN     string
+	cacheTrustedSubnet   string
 )
 
 func init() {
@@ -38,6 +40,7 @@ func init() {
 	fileStoragePathFlag = flag.String("f", "", "File storage path")
 	databaseDSNFlag = flag.String("d", "", "Database source name")
 	configFilePath = flag.String("c", "", "Config file path")
+	trustedSubnetFlag = flag.String("t", "", "trusted subnet addr")
 }
 
 type config struct {
@@ -46,6 +49,7 @@ type config struct {
 	BaseURL         string `env:"BASE_URL" envDefault:"http://localhost:8080" json:"base_url"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH" json:"file_storage_path"`
 	DatabaseDSN     string `env:"DATABASE_DSN" json:"database_dsn"`
+	TrustedSubnet   string `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
 }
 
 func getConfig() config {
@@ -74,6 +78,9 @@ func getConfig() config {
 	}
 	if *databaseDSNFlag != "" {
 		cfg.DatabaseDSN = *databaseDSNFlag
+	}
+	if *trustedSubnetFlag != "" {
+		cfg.TrustedSubnet = *trustedSubnetFlag
 	}
 
 	return cfg
@@ -122,6 +129,15 @@ func GetDatabaseDSN() string {
 	}
 	cacheDatabaseDSN = getConfig().DatabaseDSN
 	return cacheDatabaseDSN
+}
+
+// GetTrustedSubnet gets trusted subnet addr.
+func GetTrustedSubnet() string {
+	if cacheTrustedSubnet != "" {
+		return cacheTrustedSubnet
+	}
+	cacheTrustedSubnet = getConfig().TrustedSubnet
+	return cacheTrustedSubnet
 }
 
 func readFromFile(cfg *config, path string) {
