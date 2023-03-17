@@ -1,2 +1,2 @@
-// Package views with app routes.
+// Package http with app http routes.
 package http
